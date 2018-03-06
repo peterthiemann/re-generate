@@ -1,3 +1,6 @@
+.stack-work/
+re-generate.cabal
+*~
 dist
 dist-*
 cabal-dev

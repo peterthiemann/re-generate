@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - timeit >= 2.0
 - containers >= 0.5
+- optparse-applicative >= 0.14
 
 library:
   source-dirs: src

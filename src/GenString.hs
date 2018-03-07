@@ -241,9 +241,3 @@ generate' sigma r = gen r
     gen (Not r) = difference (sigma_star' sigma) (gen r)
     gen (Star r) = star6 (gen r)
 
-
--- experiments
-
-ex_a_star = star6 ["a"]
-ex_a_ab_aba_star = star6 ["a", "ab", "aba"]
-ex_abstarstar = star6 (concatenate' ["a"] (star6 ["b"]))

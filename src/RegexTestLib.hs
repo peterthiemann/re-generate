@@ -9,6 +9,8 @@ import qualified Data.List as List
 import qualified Data.Set as Set
 import Control.Applicative (liftA2)
 import Test.QuickCheck
+import GRegexp as G (GRE(..))
+import qualified GenSegments (generate)
 
 {- | Using the following types, you should describe how to build
    your regular expression types. The function `withFeatures` will then use
@@ -27,6 +29,10 @@ data Basics a = Basics
     -- | based on two regexes, construct the regex accepting the union of the elments
     , star :: a -> a
     -- | based on a regex, accept it for [0;\infty] many times.
+    , empty :: a
+    -- | Recognize the empty string
+    , null :: a
+    -- | Recognize nothing
     }
 
 
@@ -51,7 +57,7 @@ data Feature a
   -- | At least one repetition, `a+`.
   | Simplify (a -> a)
   -- | Simplifycation of regular expressions.
-  | And (a -> a -> a)
+  | Union (a -> a -> a)
   -- | And on regular expression
   | Match (a -> String -> Bool)
   -- | Matching function
@@ -67,20 +73,12 @@ withFeatures b fa = do
 
 ----------- Everything below this line is not exported, DO NOT USE ------------
 
--- | Generalized Regex datastructure. Used for generating test-Regexes.
-data GRegex = GRep Int (Maybe Int) GRegex
-            | GAlt GRegex GRegex
-            | GSeq GRegex GRegex
-            | GAnd GRegex GRegex
-            | GSet [Char]
-              deriving (Show, Eq)
-
 alphabet = "abcdef"
 
 -- | Generate synchronized Regex and GRegex.
 --
-genRe :: (Eq a, Show a) => Basics a -> Features a -> Gen (a, GRegex)
-genRe b@(Basics atom seq alt star) f = do
+genRe :: (Eq a, Show a) => Basics a -> Features a -> Gen (a, GRE Char)
+genRe b@(Basics atom seq alt star empty null) f = do
   size <- getSize
   if size <= 0
   then genBaseCase
@@ -90,26 +88,28 @@ genRe b@(Basics atom seq alt star) f = do
       char = elements alphabet
       charset = listOf1 $ elements alphabet
 
-      genBaseCase = char >>= \c -> return (atom c, GSet [c])
+      genBaseCase = char >>= \c -> return (atom c, Atom c)
 
       genWithBasics = [
+         (1, return (null, Zero)), 
+         (1, return (empty, One)),
          (10, genBaseCase),
-         (4, app2 seq GSeq),
-         (4, app2 alt GAlt),
-         (2, app1 star (GRep 0 Nothing))
+         (4, app2 seq Dot),
+         (4, app2 alt Or),
+         (2, app1 star Star)
        ]
-      genWithFeature (Set set) =
-          [(8,  charset >>= \cs -> return (set cs, GSet cs))]
-      genWithFeature (Any any) = [(1, return (any, GSet alphabet))]
-      genWithFeature (Many many) = [(2, app1 many (GRep 1 Nothing))]
-      genWithFeature (And and) =
-          [ (2, app2 and GAnd) ]
-      genWithFeature (Rep rep) =
-          [ (1, do { i <- choose (0, 2); app1 (rep i Nothing) (GRep i Nothing)})
-          , (1, do { i <- choose (0, 2)
-                   ; j <- choose (max 1 i, i+2)
-                   ; app1 (rep i (Just j)) (GRep i (Just j)) })
-          ]
+      -- genWithFeature (Set set) =
+      --     [(8,  charset >>= \cs -> return (set cs, GSet cs))]
+      -- genWithFeature (Any any) = [(1, return (any, GSet alphabet))]
+      genWithFeature (Many many) = [(2, app1 many (\x -> Dot x (Star x)))]
+      genWithFeature (Union and) =
+          [ (2, app2 and And) ]
+      -- genWithFeature (Rep rep) =
+      --     [ (1, do { i <- choose (0, 2); app1 (rep i Nothing) (GRep i Nothing)})
+      --     , (1, do { i <- choose (0, 2)
+      --              ; j <- choose (max 1 i, i+2)
+      --              ; app1 (rep i (Just j)) (GRep i (Just j)) })
+      --     ]
       genWithFeature _ = []
 
       app1 f g = do { (re, gre) <- a ; return (f re, g gre) }
@@ -120,32 +120,18 @@ genRe b@(Basics atom seq alt star) f = do
 -- | helper-function for inhabitants, returning the set of possible inhabitants
 -- based on this regex. (The Regex should match those.)
 --
-reToList :: GRegex -> Set.Set String
-reToList re =
-    case re of
-      (GSet c) -> Set.fromList $ fmap return c
-      (GAlt r r') -> reToList r `Set.union` reToList r'
-      (GSeq r r') -> reToList r `seq` reToList r'
-      (GAnd r r') -> reToList r `Set.intersection` reToList r'
-      (GRep i Nothing r) -> rep i (i+2) $ reToList r
-      (GRep i (Just j) r) -> rep i j $ reToList r
-    where
-      seq a b =
-          Set.foldr (\sa res -> Set.foldr (\sb -> Set.insert (sa ++ sb)) res b) Set.empty a
-      addEmpty i x = if i == 0 then Set.insert "" x  else x
-      rep 0 0 ss = Set.singleton ""
-      rep a b ss =
-          addEmpty a ss `seq` rep (max 0 $ a-1) (max 0 $ b-1) ss
+reToList :: GRE Char -> [String]
+reToList = GenSegments.generate alphabet
 
 
 -- | Generator for the inhabitants of this Regex
 --
-inhabitants :: GRegex -> Gen String
+inhabitants :: GRE Char -> Gen String
 inhabitants re =
   let ss = reToList re in
-  if Set.null ss
+  if List.null ss
   then discard
-  else elements $ Set.elems ss
+  else elements ss
 
 
 -- | Returns a feature or discards the test
@@ -172,19 +158,6 @@ prop_matching b f =
         l <- List.nub <$> (vectorOf 20 $ inhabitants gre)
         return (re, l)
       test (re, l) = within (10000 * List.length l) $ all (match re) l
-
-
-prop_parsing b f =
-    counterexample
-    "Parsing and showing are not equivalent for the following regular expression:"
-    $ withMaxSuccess 2000 $ forAll gen test
-    where
-      (Parsing un pa) = getFeature (\case { Parsing _ _ -> True; _ -> False}) f
-      gen = do
-        (re, _) <- resize 8 $ genRe b f
-        return re
-      -- testing for Idempotency of parsing and showing. This is doable.
-      test re = (pa $ un re) === ((pa $ un re) >>= (pa . un))
 
 prop_simplify b f =
     counterexample
@@ -216,7 +189,6 @@ prop_any b f =
 feature_property :: (Eq a, Show a) => [Basics a -> Features a -> Property]
 feature_property =
   [ prop_matching
-  , prop_parsing
   , prop_any
   , prop_simplify
   ]

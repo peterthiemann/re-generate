@@ -76,5 +76,8 @@ greet (Regen c sigma mm q t r) = do
         output2 = case mm of
                     Nothing -> output1
                     Just m  -> take (m+1) output1
-      (time, _) <- T.timeItT (liftIO $ mapM_ putStrLn (concat output2))
+        process
+          | q = show . foldr (\x b -> x == x && b) True
+          | otherwise = unlines
+      (time, _) <- T.timeItT (liftIO $ putStrLn (process $ concat output2))
       when t $ putStrLn $ show time ++ " seconds"

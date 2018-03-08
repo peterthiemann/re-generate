@@ -24,6 +24,7 @@ dependencies:
 - timeit >= 2.0
 - containers >= 0.5
 - optparse-applicative >= 0.14
+- QuickCheck >= 2.9.2
 
 library:
   source-dirs: src

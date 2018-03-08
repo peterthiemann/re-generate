@@ -60,14 +60,16 @@ sigmaStarSegs sigma = segments
     extend segment = concatMap (\x -> map (x:) segment) sigma
 
 concatenate :: (Ord t) => Segments t -> Segments t -> Segments t
-concatenate xsegs ysegs = collect xsegs ysegs Map.empty Map.empty 0
+concatenate xsegs ysegs = collect xsegs ysegs Map.empty Map.empty [] [] 0
   where
-    collect (xseg:xsegs) (yseg:ysegs) xmap ymap n =
+    collect (xseg:xsegs) (yseg:ysegs) xmap ymap xneidxs yneidxs n =
       let xmap' = Map.insert n xseg xmap
           ymap' = Map.insert n yseg ymap
+          xneidxs' = if null xseg then xneidxs else n : xneidxs
+          yneidxs' = if null yseg then yneidxs else n : yneidxs
           combine i = concatMap (\xs -> map (\ys -> xs ++ ys) (ymap' Map.! (n - i))) (xmap' Map.! i)
       in
-        (multimerge $ map combine [0 .. n]) : collect xsegs ysegs xmap' ymap' (n+1)
+        (multimerge $ map combine xneidxs') : collect xsegs ysegs xmap' ymap' xneidxs' yneidxs' (n+1)
 
 -- the star operation
 

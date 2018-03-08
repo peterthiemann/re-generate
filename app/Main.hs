@@ -11,6 +11,7 @@ import System.TimeIt as T
 import GRegexp
 import GenSegments
 import qualified GenString as G
+import RegexParser
 
 data Regen = Regen 
   { negate :: Bool
@@ -36,6 +37,7 @@ regen = Regen
       <*> optional (option auto
           ( long "maxlength"
          <> short 'm'
+         <> metavar "LEN"
          <> help "maximum length of generated strings"
          <> showDefault))
       <*> switch
@@ -58,15 +60,21 @@ main = greet =<< execParser opts
      <> header "Generate test inputs for a regular expression" )
 
 greet :: Regen -> IO ()
-greet (Regen c al mm q t r) = do
+greet (Regen c sigma mm q t r) = do
   unless q $ putStrLn $ "Called with complement = " ++ show c ++ ", maxlength = " ++ show mm ++ ", timing = " ++ show t ++ ", REGEXP = " ++ r
   -- when q $ putStrLn "quiet operation"
-  let result = star $ G.segmentize ["a", "ab", "aba"]
-      output1
-        | c = complementSegs al result
-        | otherwise = result
-      output2 = case mm of
-                  Nothing -> output1
-                  Just m  -> take (m+1) output1
-  (time, _) <- T.timeItT (liftIO $ mapM_ putStrLn (concat output2))
-  when t $ putStrLn $ show time ++ " seconds"
+  case parseRe r of
+    Nothing ->
+      putStrLn "Cannot parse regular expression"
+    Just gre -> do
+      let 
+        result0 = star $ G.segmentize ["a", "ab", "aba"]
+        result = generate' sigma gre
+        output1
+          | c = complementSegs sigma result
+          | otherwise = result
+        output2 = case mm of
+                    Nothing -> output1
+                    Just m  -> take (m+1) output1
+      (time, _) <- T.timeItT (liftIO $ mapM_ putStrLn (concat output2))
+      when t $ putStrLn $ show time ++ " seconds"

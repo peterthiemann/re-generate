@@ -60,15 +60,14 @@ sigmaStarSegs sigma = segments
     extend segment = concatMap (\x -> map (x:) segment) sigma
 
 concatenate :: (Ord t) => Segments t -> Segments t -> Segments t
-concatenate xsegs ysegs = collect 0
+concatenate xsegs ysegs = collect xsegs ysegs Map.empty Map.empty 0
   where
-    collect n = (multimerge $ map (combine n) [0 .. n]) : collect (n+1)
-    combine n i = concatMap (\xs -> map (\ys -> xs ++ ys) (listIndex ysegs (n - i)))
-                            (listIndex xsegs i)
-
-listIndex :: [[a]] -> Int -> [a]
-listIndex [] _ = []
-listIndex (x:xs) n = if n == 0 then x else listIndex xs (n-1)
+    collect (xseg:xsegs) (yseg:ysegs) xmap ymap n =
+      let xmap' = Map.insert n xseg xmap
+          ymap' = Map.insert n yseg ymap
+          combine i = concatMap (\xs -> map (\ys -> xs ++ ys) (ymap' Map.! (n - i))) (xmap' Map.! i)
+      in
+        (multimerge $ map combine [0 .. n]) : collect xsegs ysegs xmap' ymap' (n+1)
 
 -- the star operation
 
@@ -97,6 +96,9 @@ restrictedPartitions' ns n
   | n == 0 = [[]]
   | otherwise = let ns' = dropWhile (>n) ns in concatMap (\i -> map (i:) (restrictedPartitions' ns' (n - i))) ns'
 
+complementSegs :: (Ord t) => [t] -> Segments t -> Segments t
+complementSegs sigma = differenceSegs (sigmaStarSegs sigma)
+
 -- | generate elements of the language of the gre as a stream of segments
 generate' :: (Ord t) => [t] -> GRE t -> Segments t
 generate' sigma r = gen r
@@ -107,7 +109,7 @@ generate' sigma r = gen r
     gen (Dot r s) = concatenate (gen r) (gen s)
     gen (Or r s) = mergeSegs (gen r) (gen s)
     gen (And r s) = intersectSegs (gen r) (gen s)
-    gen (Not r) = differenceSegs (sigmaStarSegs sigma) (gen r)
+    gen (Not r) = complementSegs sigma (gen r)
     gen (Star r) = star (gen r)
 
 generate :: (Ord t) => [t] -> GRE t -> Lang t

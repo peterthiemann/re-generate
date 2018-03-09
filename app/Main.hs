@@ -9,7 +9,7 @@ import Control.Monad.IO.Class
 import System.TimeIt as T
 
 import GRegexp
-import GenSegments
+import qualified GenSegments as GS1
 import qualified GenString as G
 import RegexParser
 
@@ -62,20 +62,16 @@ main = greet =<< execParser opts
 greet :: Regen -> IO ()
 greet (Regen c sigma mm q t r) = do
   unless q $ putStrLn $ "Called with complement = " ++ show c ++ ", maxlength = " ++ show mm ++ ", timing = " ++ show t ++ ", REGEXP = " ++ r
-  -- when q $ putStrLn "quiet operation"
   case parseRe r of
     Nothing ->
       putStrLn "Cannot parse regular expression"
     Just gre -> do
-      let 
-        result0 = star $ G.segmentize ["a", "ab", "aba"]
-        result = generate' sigma gre
-        output1
-          | c = complementSegs sigma result
-          | otherwise = result
+      let
+        gre' = if c then Not gre else gre
+        result = GS1.generate' sigma gre'
         output2 = case mm of
-                    Nothing -> output1
-                    Just m  -> take (m+1) output1
+                    Nothing -> result
+                    Just m  -> take (m+1) result
         process
           | q = show . foldr (\x b -> x == x && b) True
           | otherwise = unlines

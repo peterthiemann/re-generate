@@ -14,6 +14,17 @@ data GRE t
     | Star (GRE t)
     deriving (Eq, Ord, Show)
 
+-- | extract the list of atoms from regular expression
+atoms :: (Ord t) => GRE t -> [t]
+atoms Zero = []
+atoms One = []
+atoms (Atom t) = [t]
+atoms (Dot r s) = union (atoms r) (atoms s)
+atoms (Or r s) = union (atoms r) (atoms s)
+atoms (And r s) = union (atoms r) (atoms s)
+atoms (Not r) = atoms r
+atoms (Star r) = atoms r
+
 type Lang t = [[t]]
 
 -- | naive implementation

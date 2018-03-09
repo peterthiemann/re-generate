@@ -39,8 +39,10 @@ concatenate xsegs ysegs = collect xsegs ysegs Map.empty Map.empty [] [] 0
           xneidxs' = if null xseg then xneidxs else n : xneidxs
           yneidxs' = if null yseg then yneidxs else n : yneidxs
           combine i = concatMap (\xs -> map (\ys -> xs ++ ys) (ymap' Map.! (n - i))) (xmap' Map.! i)
+          usefulxidxs = filter (\i -> (n-i) `elem` yneidxs') xneidxs'
       in
-        (multimerge $ map combine xneidxs') : collect xsegs ysegs xmap' ymap' xneidxs' yneidxs' (n+1)
+        (multimerge $ map combine usefulxidxs)
+        : collect xsegs ysegs xmap' ymap' xneidxs' yneidxs' (n+1)
 
 -- the star operation
 

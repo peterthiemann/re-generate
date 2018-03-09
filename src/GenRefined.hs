@@ -91,6 +91,11 @@ flattenSegs Empty = []
 flattenSegs (Cons lang segs) = flattenLang lang ++ flattenSegs segs
 flattenSegs (Full langs) = concatMap flattenLang langs
 
+flattenSegs' :: Segments t -> [[[t]]]
+flattenSegs' Empty = []
+flattenSegs' (Cons lang segs) = flattenLang lang : flattenSegs' segs
+flattenSegs' (Full langs) = map flattenLang langs
+
 updateMapIndexes :: Int -> Segments t -> Map.Map Int (Lang t) -> [Int] -> (Segments t, Map.Map Int (Lang t), [Int])
 updateMapIndexes n segs mil nidxs =
   case segs of
@@ -134,3 +139,5 @@ generateSegs sigma r = gen r
 generate :: (Ord t) => [t] -> GRE t -> [[ t ]]
 generate sigma = flattenSegs . generateSegs sigma
 
+generate' :: (Ord t) => [t] -> GRE t -> [[[ t ]]]
+generate' sigma = flattenSegs' . generateSegs sigma

@@ -1,6 +1,9 @@
+{-# LANGUAGE DeriveGeneric #-}
 module GRegexp where
 
+import Control.DeepSeq
 import Data.List
+import GHC.Generics
 
 -- | generalized regular expressions - with intersection and negation
 data GRE t
@@ -12,7 +15,9 @@ data GRE t
     | And (GRE t) (GRE t)
     | Not (GRE t)
     | Star (GRE t)
-    deriving (Eq, Ord, Show)
+    deriving (Eq, Ord, Show, Generic)
+
+instance NFData t => NFData (GRE t)
 
 -- | extract the list of atoms from regular expression
 atoms :: (Ord t) => GRE t -> [t]
@@ -43,4 +48,3 @@ naive (Star r) = [] : [ v ++ w | v <- naive r, w <- naive (Star r) ]
 -- * how to implement not?
 -- * easy to get repetitions
 -- * efficiency?
-

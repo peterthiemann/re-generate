@@ -17,6 +17,7 @@ dependencies:
   - containers >= 0.5
   - optparse-applicative >= 0.14
   - QuickCheck >= 2.9.2
+  - deepseq
 
 library:
   source-dirs: src
@@ -43,3 +44,12 @@ tests:
     dependencies:
       - re-generate
       - hspec
+
+benchmarks:
+  re-bench:
+    cpp-options: -DBENCH
+    main: bench/Bench.hs
+    ghc-options: -O2 -optc-O3 -threaded -rtsopts
+    dependencies:
+      - criterion
+      - re-generate

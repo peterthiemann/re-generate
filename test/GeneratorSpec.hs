@@ -18,7 +18,7 @@ testCase maxLen complementAlphabet f input test =
         Nothing -> fail "Invalid regular expression"
         Just parsedRe ->
             do let re = f parsedRe
-               describe ("generates correct outputs for " ++ pretty re) $
+               describe ("generates correct outputs for " ++ pretty re ++ " with maxLnegth=" ++ show maxLen ++ " and complementAlphabet=" ++ show complementAlphabet) $
                    flip mapM_ [minBound..maxBound] $ \gen ->
                    do let config =
                               GeneratorConfig

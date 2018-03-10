@@ -1,7 +1,7 @@
 module Main where
 
-import Options.Applicative
 import Data.Semigroup ((<>))
+import Options.Applicative
 
 import Control.Monad
 import Control.Monad.IO.Class
@@ -9,17 +9,10 @@ import Control.Monad.IO.Class
 import System.TimeIt as T
 
 import GRegexp
-import qualified GenRefined as GR
-import qualified GenSegments as GS1
-import qualified GenString as G
+import Generator
 import RegexParser
 
-data Backend
-  = Seg
-  | Ref
-  deriving (Read, Show, Enum, Bounded)
-
-data Regen = Regen 
+data Regen = Regen
   { negate :: Bool
   , backend :: Backend
   , alphabet :: String
@@ -72,25 +65,23 @@ main = greet =<< execParser opts
      <> progDesc "blablabla"
      <> header "Generate test inputs for a regular expression" )
 
-select :: (Ord t) => Backend -> [t] -> GRE t -> [[[ t ]]]
-select Seg = GS1.generate'
-select Ref = GR.generate'
-
 greet :: Regen -> IO ()
 greet (Regen c b sigma mm q t r) = do
   unless q $ putStrLn $ "Called with complement = " ++ show c ++ ", maxlength = " ++ show mm ++ ", timing = " ++ show t ++ ", REGEXP = " ++ r
   case parseRe r of
     Nothing ->
       putStrLn "Cannot parse regular expression"
-    Just gre -> do
-      let
-        gre' = if c then Not gre else gre
-        result = select b sigma gre'
-        output2 = case mm of
-                    Nothing -> result
-                    Just m  -> take (m+1) result
-        process
-          | q = show . foldr (\x b -> x == x && b) True
-          | otherwise = unlines
-      (time, _) <- T.timeItT (liftIO $ putStrLn (process $ concat output2))
-      when t $ putStrLn $ show time ++ " seconds"
+    Just gre ->
+      do let gre' = if c then Not gre else gre
+             cfg =
+                 GeneratorConfig
+                 { gc_backend = b
+                 , gc_maxLength = mm
+                 , gc_complementAlphabet = sigma
+                 }
+             output = runGenerator cfg gre'
+             process
+                 | q = show . foldr (\x b -> x == x && b) True
+                 | otherwise = unlines
+         (time, _) <- T.timeItT (liftIO $ putStrLn (process $ concat output))
+         when t $ putStrLn $ show time ++ " seconds"

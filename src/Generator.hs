@@ -7,6 +7,7 @@ where
 
 import GRegexp
 import RegexParser
+import qualified GenNaive
 import qualified GenRefined as GR
 import qualified GenSegments as GS1
 import qualified GenString as G
@@ -20,6 +21,7 @@ data GeneratorConfig t
 
 data Backend
     = Seg
+    | Naive
     | Ref
     deriving (Read, Show, Enum, Bounded, Eq)
 
@@ -33,3 +35,4 @@ runGenerator gc re =
 generate :: (Ord t) => Backend -> [t] -> GRE t -> [[[ t ]]]
 generate Seg = GS1.generate'
 generate Ref = GR.generate'
+generate Naive = GenNaive.generate'

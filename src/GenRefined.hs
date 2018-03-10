@@ -122,6 +122,32 @@ concatenate xsegs ysegs =
         Cons (foldr union Null $ map combine usefulxidxs)
              (collect xsegs' ysegs' xmap' ymap' xneidxs' yneidxs' (n+1))
 
+star :: (Ord t) => Segments t -> Segments t
+star Empty = Cons (Univ [[]]) Empty
+star (Full ls) = Full ls
+star (Cons _ xsegs) = Cons (Univ [[]]) $ collect xsegs Map.empty [] 1
+  where
+    collect xsegs xmap xneidxs n =
+      let (xsegs', xmap', xneidxs') =
+            updateMapIndexes n xsegs xmap xneidxs
+      in
+        Cons (foldr union Null $
+              map (langFromPartition xmap') (restrictedPartitions' xneidxs' n))
+             (collect xsegs' xmap' xneidxs' (n+1))
+
+langFromPartition :: Map.Map Int (Lang t) -> [Int] -> Lang t
+langFromPartition msegs [i] = msegs Map.! i
+langFromPartition msegs (i:is) = concatLang (msegs Map.! i) (langFromPartition msegs is)
+
+-- | pn = restrictedPartitions ns n
+-- xs \in pn => sum xs = n, xi \in xs => xi \in ns /\ xi > 0
+-- no repetitions
+-- ns is sorted decreasingly
+restrictedPartitions' :: [Int] -> Int -> [[Int]]
+restrictedPartitions' [] n = [[]]
+restrictedPartitions' ns n
+  | n == 0 = [[]]
+  | otherwise = let ns' = dropWhile (>n) ns in concatMap (\i -> map (i:) (restrictedPartitions' ns' (n - i))) ns'
 
 -- | generate elements of the language of the gre as a stream of segments
 generateSegs :: (Ord t) => [t] -> GRE t -> Segments t
@@ -134,7 +160,7 @@ generateSegs sigma r = gen r
     gen (Or r s) = unionSegs (gen r) (gen s)
     gen (And r s) = intersectSegs (gen r) (gen s)
     gen (Not r) = complementSegs sigma (gen r)
-    gen (Star r) = undefined -- star (gen r)
+    gen (Star r) = star (gen r)
 
 generate :: (Ord t) => [t] -> GRE t -> [[ t ]]
 generate sigma = flattenSegs . generateSegs sigma

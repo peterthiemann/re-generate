@@ -3,7 +3,7 @@
 Run tests+benchmarks with
 
 ```
-stack build --fast --bench --test
+stack build --bench --test
 ```
 
 ## Benchmark Results

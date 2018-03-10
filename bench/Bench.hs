@@ -32,4 +32,5 @@ main =
     , matchGroup (Just 4) "ab" Not "a*b"
     , matchGroup (Just 8) "ab" Not "a*b"
     , matchGroup (Just 16) "ab" Not "a*b"
+    , matchGroup (Just 20) "ab" Not "a*b"
     ]

@@ -6,6 +6,13 @@ import RegexParser
 
 import Test.Hspec
 
+testCase ::
+    Maybe Int
+    -> String
+    -> (GRE Char -> GRE Char)
+    -> String
+    -> ([[String]] -> IO ())
+    -> Spec
 testCase maxLen complementAlphabet f input test =
     case parseRe input of
         Nothing -> fail "Invalid regular expression"

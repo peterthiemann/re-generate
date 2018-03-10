@@ -4,6 +4,7 @@ import GRegexp
 import Data.List hiding (intersect)
 import qualified Data.List (intersect)
 import Data.Maybe
+import Partitions
 
 -- import System.TimeIt
 
@@ -184,13 +185,6 @@ star6 xss = [] : collect (tail xsegs) [] 1
     wordsFromPartition (i:is) = concatMap (\w -> map (w++) (xsegs !! i)) (wordsFromPartition is)
 
 
--- | pn = partitions n
--- xs \in pn => sum xs = n, xi \in xs => xi > 0
--- no repetitions
-partitions :: Int -> [[Int]]
-partitions n
-  | n == 0 = [[]]
-  | otherwise = concatMap (\i -> map (i:) (partitions (n - i))) [1 .. n]
 
 -- | pn = restrictedPartitions ns n
 -- xs \in pn => sum xs = n, xi \in xs => xi \in ns /\ xi > 0
@@ -202,15 +196,6 @@ restrictedPartitions ns n
   | n == 0 = [[]]
   | otherwise = let ns' = filter (<=n) ns in concatMap (\i -> map (i:) (restrictedPartitions ns' (n - i))) ns'
 
--- | pn = restrictedPartitions ns n
--- xs \in pn => sum xs = n, xi \in xs => xi \in ns /\ xi > 0
--- no repetitions
--- ns is sorted decreasingly
-restrictedPartitions' :: [Int] -> Int -> [[Int]]
-restrictedPartitions' [] n = [[]]
-restrictedPartitions' ns n
-  | n == 0 = [[]]
-  | otherwise = let ns' = dropWhile (>n) ns in concatMap (\i -> map (i:) (restrictedPartitions' ns' (n - i))) ns'
 
 collect n = concatMap wordsFromPartition (partitions n)
 wordsFromPartition [] = [[]]

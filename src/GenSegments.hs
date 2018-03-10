@@ -8,6 +8,7 @@ import qualified Data.Map.Strict as Map
 
 import LLeq
 import OrderedLists
+import Partitions
 
 type Segments t = [Lang t]
 
@@ -57,19 +58,9 @@ star xsegs = [[]] : collect Map.empty (tail xsegs) [] 1
              (multimerge $ map (wordsFromPartition mappedSegs') (restrictedPartitions' indexesOfNonEmptysegs' n))
                          : collect mappedSegs' segs indexesOfNonEmptysegs' (n + 1)
 
-    wordsFromPartition :: Map.Map Int (Lang t) -> [Int] -> Lang t
-    wordsFromPartition msegs [] = [[]]
-    wordsFromPartition msegs (i:is) = concatMap (\w -> map (w++) (msegs Map.! i)) (wordsFromPartition msegs is)
-
--- | pn = restrictedPartitions ns n
--- xs \in pn => sum xs = n, xi \in xs => xi \in ns /\ xi > 0
--- no repetitions
--- ns is sorted decreasingly
-restrictedPartitions' :: [Int] -> Int -> [[Int]]
-restrictedPartitions' [] n = [[]]
-restrictedPartitions' ns n
-  | n == 0 = [[]]
-  | otherwise = let ns' = dropWhile (>n) ns in concatMap (\i -> map (i:) (restrictedPartitions' ns' (n - i))) ns'
+wordsFromPartition :: Map.Map Int (Lang t) -> [Int] -> Lang t
+wordsFromPartition msegs [] = [[]]
+wordsFromPartition msegs (i:is) = concatMap (\w -> map (w++) (msegs Map.! i)) (wordsFromPartition msegs is)
 
 complementSegs :: (Ord t) => [t] -> Segments t -> Segments t
 complementSegs sigma = differenceSegs (sigmaStarSegs sigma)

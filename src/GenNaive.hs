@@ -6,6 +6,7 @@ import qualified Data.List (intersect)
 
 import LLeq
 import OrderedLists
+import Partitions
 
 type Segments t = [Lang t]
 
@@ -48,14 +49,6 @@ star xsegs = [[]] : collect 1
     -- wordsFromPartition :: [Int] -> Lang t
     wordsFromPartition [] = [[]]
     wordsFromPartition (i:is) = concatMap (\w -> map (w++) (xsegs !! i)) (wordsFromPartition is)
-
--- | pn = partitions n
--- xs \in pn => sum xs = n, xi \in xs => xi > 0
--- no repetitions
-partitions :: Int -> [[Int]]
-partitions n
-  | n == 0 = [[]]
-  | otherwise = concatMap (\i -> map (i:) (partitions (n - i))) [1 .. n]
 
 complementSegs :: (Ord t) => [t] -> Segments t -> Segments t
 complementSegs sigma = differenceSegs (sigmaStarSegs sigma)

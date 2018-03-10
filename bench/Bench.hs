@@ -30,4 +30,6 @@ main =
     defaultMain
     [ matchGroup (Just 4) "ab" id "a*b"
     , matchGroup (Just 4) "ab" Not "a*b"
+    , matchGroup (Just 8) "ab" Not "a*b"
+    , matchGroup (Just 16) "ab" Not "a*b"
     ]

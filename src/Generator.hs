@@ -7,7 +7,8 @@ where
 
 import GRegexp
 import RegexParser
-import qualified GenNaive
+import qualified GenNaive as GN
+import qualified GenNaiveStar as GNS
 import qualified GenRefined as GR
 import qualified GenRefinedStar as GRS
 import qualified GenSegments as GS1
@@ -23,6 +24,7 @@ data GeneratorConfig t
 
 data Backend
     = Naive
+    | NaiveStar
     | Seg
     | SegStar
     | Ref
@@ -41,4 +43,5 @@ generate Seg = GS1.generate'
 generate SegStar = GS2.generate'
 generate Ref = GR.generate'
 generate RefStar = GRS.generate'
-generate Naive = GenNaive.generate'
+generate Naive = GN.generate'
+generate NaiveStar = GNS.generate'

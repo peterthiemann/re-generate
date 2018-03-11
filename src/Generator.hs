@@ -9,6 +9,7 @@ import GRegexp
 import RegexParser
 import qualified GenNaive
 import qualified GenRefined as GR
+import qualified GenRefinedStar as GRS
 import qualified GenSegments as GS1
 import qualified GenSegmentsStar2 as GS2
 import qualified GenString as G
@@ -21,10 +22,11 @@ data GeneratorConfig t
     } deriving (Show, Eq)
 
 data Backend
-    = Seg
+    = Naive
+    | Seg
     | SegStar
-    | Naive
     | Ref
+    | RefStar
     deriving (Read, Show, Enum, Bounded, Eq)
 
 runGenerator :: Ord t => GeneratorConfig t -> GRE t -> [[[t]]]
@@ -38,4 +40,5 @@ generate :: (Ord t) => Backend -> [t] -> GRE t -> [[[ t ]]]
 generate Seg = GS1.generate'
 generate SegStar = GS2.generate'
 generate Ref = GR.generate'
+generate RefStar = GRS.generate'
 generate Naive = GenNaive.generate'

@@ -37,3 +37,10 @@ spec =
        testCase (Just 4) "ab" Not "a*b" $ \res ->
            res `shouldBe`
                [[""],["a"],["aa","ba","bb"],["aaa","aba","abb","baa","bab","bba","bbb"]]
+       testCase (Just 4) "ab" id "~(a*)|a*"
+         (`shouldBe` [[""]
+                     ,["a","b"]
+                     ,["aa","ab","ba","bb"]
+                     ,["aaa", "aab" ,"aba","abb","baa","bab","bba","bbb"]])
+       testCase (Just 4) "ab" id "~(a*)&a*"
+         (`shouldBe` [[], [], [], []])

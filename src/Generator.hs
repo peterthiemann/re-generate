@@ -7,6 +7,7 @@ where
 
 import GRegexp
 import RegexParser
+import Types (Sigma)
 import qualified GenNaive as GN
 import qualified GenNaiveStar as GNS
 import qualified GenRefined as GR
@@ -15,11 +16,14 @@ import qualified GenSegments as GS1
 import qualified GenSegmentsStar2 as GS2
 import qualified GenString as G
 
-data GeneratorConfig t
+import qualified Data.Set as S
+import qualified Data.Text as T
+
+data GeneratorConfig
     = GeneratorConfig
     { gc_backend :: !Backend
     , gc_maxLength :: !(Maybe Int)
-    , gc_complementAlphabet :: ![t]
+    , gc_complementAlphabet :: !Sigma
     } deriving (Show, Eq)
 
 data Backend
@@ -31,14 +35,14 @@ data Backend
     | RefStar
     deriving (Read, Show, Enum, Bounded, Eq)
 
-runGenerator :: Ord t => GeneratorConfig t -> GRE t -> [[[t]]]
+runGenerator :: GeneratorConfig -> GRE Char -> [[T.Text]]
 runGenerator gc re =
     let r = generate (gc_backend gc) (gc_complementAlphabet gc) re
     in case gc_maxLength gc of
          Just l -> take l r
          Nothing -> r
 
-generate :: (Ord t) => Backend -> [t] -> GRE t -> [[[ t ]]]
+generate :: Backend -> Sigma -> GRE Char -> [[T.Text]]
 generate Seg = GS1.generate'
 generate SegStar = GS2.generate'
 generate Ref = GR.generate'

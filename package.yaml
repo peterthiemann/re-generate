@@ -18,6 +18,7 @@ dependencies:
   - optparse-applicative >= 0.14
   - QuickCheck >= 2.9.2
   - deepseq
+  - text
 
 library:
   source-dirs: src

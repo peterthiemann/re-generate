@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module OrderedListSpec where
 
 import OrderedLists

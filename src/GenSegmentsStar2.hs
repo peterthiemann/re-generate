@@ -16,7 +16,7 @@ sigmaStarSegs :: Sigma -> Segments
 sigmaStarSegs sigma =
     segments
     where
-      segments = [T.empty] : map extend segments
+      segments = [mempty] : map extend segments
       extend segment = concatMap (\x -> map (T.singleton x<>) segment) sigma
 
 concatenate :: Segments -> Segments -> Segments
@@ -38,7 +38,7 @@ concatenate xsegs ysegs = collect xsegs ysegs Map.empty Map.empty [] [] 0
 star' :: Segments -> Segments
 star' xsegs = rsegs
   where
-    rsegs = [T.empty] : collect (tail xsegs) rsegs Map.empty Map.empty [] [] 1
+    rsegs = [mempty] : collect (tail xsegs) rsegs Map.empty Map.empty [] [] 1
     collect (xsegn : xsegs) (rsegn1 : rsegs) xmap rmap xneidxs rneidxs n =
       let xmap' = Map.insert n xsegn xmap
           rmap' = Map.insert (n-1) rsegn1 rmap
@@ -58,7 +58,7 @@ generate' :: Sigma -> GRE Char -> Segments
 generate' sigma r = gen r
   where
     gen Zero = repeat []
-    gen One  = [T.empty] : repeat []
+    gen One  = [mempty] : repeat []
     gen (Atom t) = [] : [T.singleton t] : repeat []
     gen (Dot r s) = concatenate (gen r) (gen s)
     gen (Or r s) = mergeSegs (gen r) (gen s)

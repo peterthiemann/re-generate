@@ -16,7 +16,7 @@ sigmaStarSegs :: Sigma -> Segments
 sigmaStarSegs sigma =
     segments
     where
-      segments = [T.empty] : map extend segments
+      segments = [mempty] : map extend segments
       extend segment = concatMap (\x -> map (T.singleton x<>) segment) sigma
 
 concatenate :: Segments -> Segments -> Segments
@@ -38,7 +38,7 @@ concatenate xsegs ysegs = collect xsegs ysegs Map.empty Map.empty [] [] 0
 
 -- | computing the indexesOfNonEmptysegs by accumulation
 star :: Segments -> Segments
-star xsegs = [T.empty] : collect Map.empty (tail xsegs) [] 1
+star xsegs = [mempty] : collect Map.empty (tail xsegs) [] 1
   where
     collect mappedSegs (segn : segs) indexesOfNonEmptysegs n =
           let indexesOfNonEmptysegs' = if null segn then indexesOfNonEmptysegs else n : indexesOfNonEmptysegs
@@ -48,7 +48,7 @@ star xsegs = [T.empty] : collect Map.empty (tail xsegs) [] 1
                          : collect mappedSegs' segs indexesOfNonEmptysegs' (n + 1)
 
 wordsFromPartition :: Map.Map Int (Lang) -> [Int] -> Lang
-wordsFromPartition msegs [] = [T.empty]
+wordsFromPartition msegs [] = [mempty]
 wordsFromPartition msegs (i:is) = concatMap (\w -> map (w<>) (msegs Map.! i)) (wordsFromPartition msegs is)
 
 complementSegs :: Sigma -> Segments -> Segments
@@ -59,7 +59,7 @@ generate' :: Sigma -> GRE Char -> Segments
 generate' sigma r = gen r
   where
     gen Zero = repeat []
-    gen One  = [T.empty] : repeat []
+    gen One  = [mempty] : repeat []
     gen (Atom t) = [] : [T.singleton t] : repeat []
     gen (Dot r s) = concatenate (gen r) (gen s)
     gen (Or r s) = mergeSegs (gen r) (gen s)

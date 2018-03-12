@@ -83,7 +83,7 @@ differenceSegs (Full (xl : xls)) (Cons yl ysegs) =
 sigmaStarSegs :: Sigma -> Segments
 sigmaStarSegs sigma = Full (map Univ segments)
   where
-    segments = [T.empty] : map extend segments
+    segments = [mempty] : map extend segments
     extend segment = concatMap (\x -> map (T.singleton x<>) segment) sigma
 
 complementSegs :: Sigma -> Segments -> Segments

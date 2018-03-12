@@ -14,7 +14,7 @@ sigmaStarSegs :: Sigma -> Segments
 sigmaStarSegs sigma =
     segments
     where
-      segments = [T.empty] : map extend segments
+      segments = [mempty] : map extend segments
       extend segment = concatMap (\x -> map (T.singleton x<>) segment) sigma
 
 concatenate :: Segments -> Segments -> Segments
@@ -31,14 +31,14 @@ concatenate xsegs ysegs =
 -- | computing the indexesOfNonEmptysegs by accumulation
 star :: Segments -> Segments
 star xsegs =
-    [T.empty] : collect 1
+    [mempty] : collect 1
     where
       collect n =
           (multimerge $ map wordsFromPartition (partitions n))
           : collect (n + 1)
 
       wordsFromPartition =
-          foldr (\i -> concatMap (\w -> map (w<>) (xsegs !! i))) [T.empty]
+          foldr (\i -> concatMap (\w -> map (w<>) (xsegs !! i))) [mempty]
 
 complementSegs :: Sigma -> Segments -> Segments
 complementSegs sigma = differenceSegs (sigmaStarSegs sigma)
@@ -49,7 +49,7 @@ generate' sigma =
     gen
     where
       gen Zero = repeat []
-      gen One  = [T.empty] : repeat []
+      gen One  = [mempty] : repeat []
       gen (Atom t) = [] : [T.singleton t] : repeat []
       gen (Dot r s) = concatenate (gen r) (gen s)
       gen (Or r s) = mergeSegs (gen r) (gen s)

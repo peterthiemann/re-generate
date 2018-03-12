@@ -17,7 +17,7 @@ sigma_star :: Sigma -> Lang
 sigma_star sigma =
     loop
     where
-      loop = T.empty : concatMap f loop
+      loop = mempty : concatMap f loop
       snoc xs x = xs <> T.singleton x
       f ts = map (snoc ts) sigma
 
@@ -26,7 +26,7 @@ sigma_star' :: Sigma -> Lang
 sigma_star' sigma =
     concat segments
     where
-      segments = [T.empty] : map extend segments
+      segments = [mempty] : map extend segments
       extend segment = concatMap (\x -> map (T.singleton x<>) segment) sigma
 
 -- | has problems because it may hang
@@ -60,14 +60,14 @@ segmentize = collect 0
         in takes : collect (n+1) drops
 
 -- | declarative, but not productive
-star xss = merge [T.empty] (concatenate xss (star xss))
+star xss = merge [mempty] (concatenate xss (star xss))
 
 -- | generate elements of the language of the gre as an ll-ascending stream
 generate :: Sigma -> GRE Char -> Lang
 generate sigma r = gen r
   where
     gen Zero = []
-    gen One  = [T.empty]
+    gen One  = [mempty]
     gen (Atom t) = [T.singleton t]
     gen (Dot r s) = concatenate (gen r) (gen s)
     gen (Or r s) = merge (gen r) (gen s)
@@ -104,7 +104,7 @@ maybeIndex (x:xs) n =
     if n == 0 then Just x else maybeIndex xs (n-1)
 
 -- | declarative, but not productive
-star' xss = merge [T.empty] (concatenate' xss (star' xss))
+star' xss = merge [mempty] (concatenate' xss (star' xss))
 
 
 -- | not generally productive
@@ -114,13 +114,13 @@ star4 xss = collect 0
     xsegs = segmentize xss
     collect n =
         (multimerge $ map wordsFromPartition (partitions n)) <> collect (n + 1)
-    wordsFromPartition [] = [T.empty]
+    wordsFromPartition [] = [mempty]
     wordsFromPartition (i:is) =
         concatMap (\w -> map (<>w) (xsegs !! i)) (wordsFromPartition is)
 
 -- | productive
 star4' :: [T.Text] -> [T.Text]
-star4' xss = T.empty : collect 1
+star4' xss = mempty : collect 1
   where
     xsegs = segmentize xss
     infiniteResult = any (\xs -> T.length xs > 0) xss
@@ -129,13 +129,13 @@ star4' xss = T.empty : collect 1
       | infiniteResult =
             (multimerge $ map wordsFromPartition (partitions n)) <> collect (n + 1)
       | otherwise = []
-    wordsFromPartition [] = [T.empty]
+    wordsFromPartition [] = [mempty]
     wordsFromPartition (i:is) =
         concatMap (\w -> map (<>w) (xsegs !! i)) (wordsFromPartition is)
 
 -- | productive, more efficient?
 star5 :: [T.Text] -> [T.Text]
-star5 xss = T.empty : collect 1
+star5 xss = mempty : collect 1
   where
     xsegs = segmentize xss
     emptysegs = map (not . null) xsegs
@@ -144,12 +144,12 @@ star5 xss = T.empty : collect 1
     collect n
       | infiniteResult = (multimerge $ map wordsFromPartition (restrictedPartitions (indexesOfNonEmptysegs n) n)) ++ collect (n + 1)
       | otherwise = []
-    wordsFromPartition [] = [T.empty]
+    wordsFromPartition [] = [mempty]
     wordsFromPartition (i:is) = concatMap (\w -> map (w<>) (xsegs !! i)) (wordsFromPartition is)
 
 -- | computing the indexesOfNonEmptysegs by accumulation
 star6 :: [T.Text] -> [T.Text]
-star6 xss = T.empty : collect (tail xsegs) [] 1
+star6 xss = mempty : collect (tail xsegs) [] 1
   where
     xsegs = segmentize xss
     infiniteResult =
@@ -164,7 +164,7 @@ star6 xss = T.empty : collect (tail xsegs) [] 1
           in (multimerge $ map wordsFromPartition (restrictedPartitions' indexesOfNonEmptysegs' n))
                          <> collect segs indexesOfNonEmptysegs' (n + 1)
       | otherwise = []
-    wordsFromPartition [] = [T.empty]
+    wordsFromPartition [] = [mempty]
     wordsFromPartition (i:is) = concatMap (\w -> map (w<>) (xsegs !! i)) (wordsFromPartition is)
 
 
@@ -182,7 +182,7 @@ restrictedPartitions ns n
 
 collect n = concatMap wordsFromPartition (partitions n)
 
-wordsFromPartition [] = [T.empty]
+wordsFromPartition [] = [mempty]
 wordsFromPartition (i:is) = concatMap (\w -> map (<>w) (xsegs !! i)) (wordsFromPartition is)
 
 -- | combination of takeWhile and dropWhile
@@ -197,7 +197,7 @@ generate' :: Sigma -> GRE Char -> Lang
 generate' sigma r = gen r
   where
     gen Zero = []
-    gen One  = [T.empty]
+    gen One  = [mempty]
     gen (Atom t) = [T.singleton t]
     gen (Dot r s) = concatenate' (gen r) (gen s)
     gen (Or r s) = merge (gen r) (gen s)

@@ -11,11 +11,11 @@ import qualified Data.Text as T
 
 
 star :: Segments -> Segments
-star Empty = Cons (Univ [T.empty]) Empty
+star Empty = Cons (Univ [mempty]) Empty
 star (Full ls) = Full ls
 star (Cons _ xsegs) = rsegs
   where
-    rsegs = Cons (Univ [T.empty]) $ collect xsegs rsegs Map.empty Map.empty [] [] 1
+    rsegs = Cons (Univ [mempty]) $ collect xsegs rsegs Map.empty Map.empty [] [] 1
     collect xsegs rsegs xmap rmap xneidxs rneidxs n =
       let (xsegs', xmap', xneidxs') =
             updateMapIndexes n xsegs xmap xneidxs
@@ -32,7 +32,7 @@ generateSegs :: Sigma -> GRE Char -> Segments
 generateSegs sigma r = gen r
   where
     gen Zero = Empty
-    gen One  = Cons (Data [T.empty]) Empty
+    gen One  = Cons (Data [mempty]) Empty
     gen (Atom t) = Cons Null $ Cons (Data [T.singleton t]) Empty
     gen (Dot r s) = concatenate (gen r) (gen s)
     gen (Or r s) = unionSegs (gen r) (gen s)

@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module GeneratorSpec (spec) where
 
 import GRegexp
@@ -5,13 +6,14 @@ import Generator
 import RegexParser
 
 import Test.Hspec
+import qualified Data.Text as T
 
 testCase ::
     Maybe Int
     -> String
     -> (GRE Char -> GRE Char)
     -> String
-    -> ([[String]] -> IO ())
+    -> ([[T.Text]] -> IO ())
     -> Spec
 testCase maxLen complementAlphabet f input test =
     case parseRe input of

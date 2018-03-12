@@ -1,72 +1,45 @@
+{-# LANGUAGE OverloadedStrings #-}
 module GenString where
 
 import GRegexp
-import Data.List hiding (intersect)
-import qualified Data.List (intersect)
-import Data.Maybe
+import LLeq
+import OrderedLists
 import Partitions
+import Types
 
--- import System.TimeIt
-
--- | length lexicographic ordering
-lleq :: (Ord t) => [t] -> [t] -> Bool
-lleq xs ys =
-  let lxs = length xs
-      lys = length ys
-  in  lxs < lys ||
-      lxs == lys && xs <= ys
-
-merge :: (Ord t) => Lang t -> Lang t -> Lang t
-merge [] yss = yss
-merge xss [] = xss
-merge xss@(xs:xss') yss@(ys:yss')
-  | xs == ys = xs : merge xss' yss'
-  | lleq xs ys = xs : merge xss' yss
-  | otherwise    = ys : merge xss yss'
-
-intersect :: (Ord t) => Lang t -> Lang t -> Lang t
-intersect [] yss = []
-intersect xss [] = []
-intersect xss@(xs:xss') yss@(ys:yss')
-  | xs == ys = xs : intersect xss' yss'
-  | lleq xs ys = intersect xss' yss
-  | otherwise    = intersect xss yss'
-
-difference :: (Ord t) => Lang t -> Lang t -> Lang t
-difference [] yss = []
-difference xss [] = xss
-difference xss@(xs:xss') yss@(ys:yss')
-  | xs == ys = difference xss' yss'
-  | lleq xs ys = xs : difference xss' yss
-  | otherwise    = difference xss yss'
-
-multimerge :: (Ord t) => [Lang t] -> Lang t
-multimerge = foldr merge []  
+import Data.List hiding (intersect)
+import Data.Maybe
+import Data.Monoid
+import qualified Data.List (intersect)
+import qualified Data.Text as T
 
 -- | inefficient definition due to use of snoc
-sigma_star :: [t] -> Lang t
-sigma_star sigma = loop
-  where
-    loop = [] : concatMap f loop
-    snoc xs x = xs ++ [x]
-    f ts = map (snoc ts) sigma
+sigma_star :: Sigma -> Lang
+sigma_star sigma =
+    loop
+    where
+      loop = T.empty : concatMap f loop
+      snoc xs x = xs <> T.singleton x
+      f ts = map (snoc ts) sigma
 
 -- | create sigma* in a segmentized way avoids the inefficiency of snoc
-sigma_star' :: [t] -> Lang t
-sigma_star' sigma = concat segments
-  where
-    segments = [[]] : map extend segments
-    extend segment = concatMap (\x -> map (x:) segment) sigma
-
+sigma_star' :: Sigma -> Lang
+sigma_star' sigma =
+    concat segments
+    where
+      segments = [T.empty] : map extend segments
+      extend segment = concatMap (\x -> map (T.singleton x<>) segment) sigma
 
 -- | has problems because it may hang
-concatenate ::(Ord t) => Lang t -> Lang t -> Lang t
+concatenate ::Lang -> Lang -> Lang
 concatenate xss yss = collect 0
   where
     xsegs = segmentize xss
     ysegs = segmentize yss
-    collect n = (multimerge $ map (combine n) [0 .. n]) ++ collect (n+1)
-    combine n i = concatMap (\xs -> map (\ys -> xs ++ ys) (ysegs !! (n - i))) (xsegs !! i)
+    collect n =
+        (multimerge $ map (combine n) [0 .. n]) <> collect (n+1)
+    combine n i =
+        concatMap (\xs -> map (\ys -> xs <> ys) (ysegs !! (n - i))) (xsegs !! i)
 
 -- | for testing
 xss = ["", "a", "cd"]
@@ -74,26 +47,29 @@ yss = ["", "b", "aa"]
 
 xsegs = segmentize xss
 ysegs = segmentize yss
-combine n i = concatMap (\xs -> map (\ys -> xs ++ ys) (ysegs !! (n - i))) (xsegs !! i)
+combine n i = concatMap (\xs -> map (\ys -> xs <> ys) (ysegs !! (n - i))) (xsegs !! i)
 
-    
+
 -- | collect elements of the same length; always returns an infinite list
 -- each same-length segment is sorted lexicographically
-segmentize :: Lang t -> [[[t]]]
+segmentize :: Lang -> [[T.Text]]
 segmentize = collect 0
   where
-    collect n xss = let (takes, drops) = splitWhile (\xs -> length xs == n) xss in takes : collect (n+1) drops
+    collect n xss =
+        let (takes, drops) =
+                splitWhile (\xs -> T.length xs == n) xss
+        in takes : collect (n+1) drops
 
 -- | declarative, but not productive
-star xss = merge [[]] (concatenate xss (star xss))
+star xss = merge [T.empty] (concatenate xss (star xss))
 
 -- | generate elements of the language of the gre as an ll-ascending stream
-generate :: (Ord t) => [t] -> GRE t -> Lang t
+generate :: Sigma -> GRE Char -> Lang
 generate sigma r = gen r
   where
     gen Zero = []
-    gen One  = [[]]
-    gen (Atom t) = [[t]]
+    gen One  = [T.empty]
+    gen (Atom t) = [T.singleton t]
     gen (Dot r s) = concatenate (gen r) (gen s)
     gen (Or r s) = merge (gen r) (gen s)
     gen (And r s) = intersect (gen r) (gen s)
@@ -103,86 +79,94 @@ generate sigma r = gen r
 -- fix problems with concat
 
 -- collect elements of the same length; returns a finite list for finite languages
-segmentize' :: Lang t -> [[[t]]]
+segmentize' :: Lang -> [[T.Text]]
 segmentize' = collect 0
   where
     collect n [] = []
-    collect n xss = let (takes, drops) = splitWhile (\xs -> length xs == n) xss in takes : collect (n+1) drops
+    collect n xss =
+        let (takes, drops) =
+                splitWhile (\xs -> T.length xs == n) xss
+        in takes : collect (n+1) drops
 
-concatenate' :: (Ord t) => Lang t -> Lang t -> Lang t
+concatenate' :: Lang -> Lang -> Lang
 concatenate' xss yss = collect 0
   where
     xsegs = segmentize' xss
     ysegs = segmentize' yss
     exhausted xs n = all isNothing (map (maybeIndex xs) [n `div` 2 .. n])
     collect n | exhausted xsegs n && exhausted ysegs n = []
-              | otherwise = (multimerge $ map (combine n) [0 .. n]) ++ collect (n+1)
-    combine n i = concatMap (\xs -> map (\ys -> xs ++ ys) (fromMaybe [] $ maybeIndex ysegs (n - i))) (fromMaybe [] $ maybeIndex xsegs i)
+              | otherwise = (multimerge $ map (combine n) [0 .. n]) <> collect (n+1)
+    combine n i = concatMap (\xs -> map (\ys -> xs <> ys) (fromMaybe [] $ maybeIndex ysegs (n - i))) (fromMaybe [] $ maybeIndex xsegs i)
 
 maybeIndex :: [a] -> Int -> Maybe a
-maybeIndex [] _ = Nothing
-maybeIndex (x:xs) n = if n == 0 then Just x else maybeIndex xs (n-1)
-
-{-
-xsegs = segmentize' xss
-ysegs = segmentize' yss
-combine n i = concatMap (\xs -> map (\ys -> xs ++ ys) (maybe [] id $ maybeIndex ysegs (n - i))) (maybe [] id $ maybeIndex xsegs i)
-xhausted n = all isNothing (map (maybeIndex xsegs) [n `div` 2 .. n])
--}
+maybeIndex [] _ =
+    Nothing
+maybeIndex (x:xs) n =
+    if n == 0 then Just x else maybeIndex xs (n-1)
 
 -- | declarative, but not productive
-star' xss = merge [[]] (concatenate' xss (star' xss))
+star' xss = merge [T.empty] (concatenate' xss (star' xss))
 
-  
+
 -- | not generally productive
-star4 :: (Ord t) => [[t]] -> [[t]]
+star4 :: [T.Text] -> [T.Text]
 star4 xss = collect 0
   where
     xsegs = segmentize xss
-    collect n = (multimerge $ map wordsFromPartition (partitions n)) ++ collect (n + 1)
-    wordsFromPartition [] = [[]]
-    wordsFromPartition (i:is) = concatMap (\w -> map (++w) (xsegs !! i)) (wordsFromPartition is)
+    collect n =
+        (multimerge $ map wordsFromPartition (partitions n)) <> collect (n + 1)
+    wordsFromPartition [] = [T.empty]
+    wordsFromPartition (i:is) =
+        concatMap (\w -> map (<>w) (xsegs !! i)) (wordsFromPartition is)
 
 -- | productive
-star4' :: (Ord t) => [[t]] -> [[t]]
-star4' xss = [] : collect 1
+star4' :: [T.Text] -> [T.Text]
+star4' xss = T.empty : collect 1
   where
     xsegs = segmentize xss
-    infiniteResult = any (\xs -> length xs > 0) xss
-    collect n 
-      | infiniteResult = (multimerge $ map wordsFromPartition (partitions n)) ++ collect (n + 1)
+    infiniteResult = any (\xs -> T.length xs > 0) xss
+    collect :: Int -> Lang
+    collect n
+      | infiniteResult =
+            (multimerge $ map wordsFromPartition (partitions n)) <> collect (n + 1)
       | otherwise = []
-    wordsFromPartition [] = [[]]
-    wordsFromPartition (i:is) = concatMap (\w -> map (++w) (xsegs !! i)) (wordsFromPartition is)
+    wordsFromPartition [] = [T.empty]
+    wordsFromPartition (i:is) =
+        concatMap (\w -> map (<>w) (xsegs !! i)) (wordsFromPartition is)
 
 -- | productive, more efficient?
-star5 :: (Ord t) => [[t]] -> [[t]]
-star5 xss = [] : collect 1
+star5 :: [T.Text] -> [T.Text]
+star5 xss = T.empty : collect 1
   where
     xsegs = segmentize xss
     emptysegs = map (not . null) xsegs
     indexesOfNonEmptysegs n = map snd $ filter fst $ zip emptysegs [0 .. n]
-    infiniteResult = any (\xs -> length xs > 0) xss
-    collect n 
+    infiniteResult = any (\xs -> T.length xs > 0) xss
+    collect n
       | infiniteResult = (multimerge $ map wordsFromPartition (restrictedPartitions (indexesOfNonEmptysegs n) n)) ++ collect (n + 1)
       | otherwise = []
-    wordsFromPartition [] = [[]]
-    wordsFromPartition (i:is) = concatMap (\w -> map (w++) (xsegs !! i)) (wordsFromPartition is)
+    wordsFromPartition [] = [T.empty]
+    wordsFromPartition (i:is) = concatMap (\w -> map (w<>) (xsegs !! i)) (wordsFromPartition is)
 
 -- | computing the indexesOfNonEmptysegs by accumulation
-star6 xss = [] : collect (tail xsegs) [] 1
+star6 :: [T.Text] -> [T.Text]
+star6 xss = T.empty : collect (tail xsegs) [] 1
   where
     xsegs = segmentize xss
-    infiniteResult = any (\xs -> length xs > 0) xss
+    infiniteResult =
+        any (\xs -> T.length xs > 0) xss
     -- indexesOfNonEmptysegs is sorted decreasingly: taking advantage of that in restrictedPartitions'!
-    collect (segn : segs) indexesOfNonEmptysegs n 
-      | infiniteResult = 
-          let indexesOfNonEmptysegs' = if null segn then indexesOfNonEmptysegs else n : indexesOfNonEmptysegs
+    collect (segn : segs) indexesOfNonEmptysegs n
+      | infiniteResult =
+          let indexesOfNonEmptysegs' =
+                  if null segn
+                  then indexesOfNonEmptysegs
+                  else n : indexesOfNonEmptysegs
           in (multimerge $ map wordsFromPartition (restrictedPartitions' indexesOfNonEmptysegs' n))
-                         ++ collect segs indexesOfNonEmptysegs' (n + 1)
+                         <> collect segs indexesOfNonEmptysegs' (n + 1)
       | otherwise = []
-    wordsFromPartition [] = [[]]
-    wordsFromPartition (i:is) = concatMap (\w -> map (w++) (xsegs !! i)) (wordsFromPartition is)
+    wordsFromPartition [] = [T.empty]
+    wordsFromPartition (i:is) = concatMap (\w -> map (w<>) (xsegs !! i)) (wordsFromPartition is)
 
 
 
@@ -198,8 +182,9 @@ restrictedPartitions ns n
 
 
 collect n = concatMap wordsFromPartition (partitions n)
-wordsFromPartition [] = [[]]
-wordsFromPartition (i:is) = concatMap (\w -> map (++w) (xsegs !! i)) (wordsFromPartition is)
+
+wordsFromPartition [] = [T.empty]
+wordsFromPartition (i:is) = concatMap (\w -> map (<>w) (xsegs !! i)) (wordsFromPartition is)
 
 -- | check if list is ll sorted
 llsorted [] = []
@@ -214,15 +199,14 @@ splitWhile p xs@(x:xs')
   | otherwise = ([], xs)
 
 -- | generate elements of the language of the gre as an ll-ascending stream; the final thing
-generate' :: (Ord t) => [t] -> GRE t -> Lang t
+generate' :: Sigma -> GRE Char -> Lang
 generate' sigma r = gen r
   where
     gen Zero = []
-    gen One  = [[]]
-    gen (Atom t) = [[t]]
+    gen One  = [T.empty]
+    gen (Atom t) = [T.singleton t]
     gen (Dot r s) = concatenate' (gen r) (gen s)
     gen (Or r s) = merge (gen r) (gen s)
     gen (And r s) = intersect (gen r) (gen s)
     gen (Not r) = difference (sigma_star' sigma) (gen r)
     gen (Star r) = star6 (gen r)
-

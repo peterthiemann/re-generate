@@ -5,6 +5,8 @@ import Options.Applicative
 
 import Control.Monad
 import Control.Monad.IO.Class
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
 
 import System.TimeIt as T
 
@@ -80,8 +82,9 @@ greet (Regen c b sigma mm q t r) = do
                  , gc_complementAlphabet = sigma
                  }
              output = runGenerator cfg gre'
+             process :: [T.Text] -> T.Text
              process
-                 | q = show . foldr (\x b -> x == x && b) True
-                 | otherwise = unlines
-         (time, _) <- T.timeItT (liftIO $ putStrLn (process $ concat output))
+                 | q = T.pack . show . foldr (\x b -> x == x && b) True
+                 | otherwise = T.unlines
+         (time, _) <- T.timeItT (liftIO $ T.putStrLn (process $ concat output))
          when t $ putStrLn $ show time ++ " seconds"

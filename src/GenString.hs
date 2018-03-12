@@ -2,7 +2,6 @@
 module GenString where
 
 import GRegexp
-import LLeq
 import OrderedLists
 import Partitions
 import Types
@@ -185,11 +184,6 @@ collect n = concatMap wordsFromPartition (partitions n)
 
 wordsFromPartition [] = [T.empty]
 wordsFromPartition (i:is) = concatMap (\w -> map (<>w) (xsegs !! i)) (wordsFromPartition is)
-
--- | check if list is ll sorted
-llsorted [] = []
-llsorted [_] = []
-llsorted (x:xs@(y:_)) = lleq x y : llsorted xs
 
 -- | combination of takeWhile and dropWhile
 splitWhile :: (a -> Bool) -> [a] -> ([a], [a])

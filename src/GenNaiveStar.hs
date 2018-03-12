@@ -1,7 +1,6 @@
 module GenNaiveStar where
 
 import GRegexp
-import LLeq
 import OrderedLists
 import Partitions
 import Types

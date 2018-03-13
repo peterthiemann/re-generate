@@ -14,6 +14,7 @@ import qualified GenRefined as GR
 import qualified GenRefinedStar as GRS
 import qualified GenSegments as GS1
 import qualified GenSegmentsStar2 as GS2
+import qualified GenSet as GS
 import qualified GenString as G
 
 import qualified Data.Set as S
@@ -33,6 +34,7 @@ data Backend
     | SegStar
     | Ref
     | RefStar
+    | NaiveSet
     deriving (Read, Show, Enum, Bounded, Eq)
 
 runGenerator :: GeneratorConfig -> GRE Char -> [[T.Text]]
@@ -49,3 +51,4 @@ generate Ref = GR.generate'
 generate RefStar = GRS.generate'
 generate Naive = GN.generate'
 generate NaiveStar = GNS.generate'
+generate NaiveSet = GS.generate'

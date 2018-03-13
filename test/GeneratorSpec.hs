@@ -5,6 +5,7 @@ import GRegexp
 import Generator
 import RegexParser
 
+import Data.List (sort)
 import Test.Hspec
 import qualified Data.Text as T
 
@@ -29,13 +30,16 @@ testCase maxLen complementAlphabet f input test =
                               , gc_complementAlphabet = complementAlphabet
                               }
                       it ("using " ++ show gen) $
-                          test (runGenerator config re)
+                          test (map sort $ runGenerator config re)
 
 spec :: Spec
 spec =
     do testCase (Just 4) "ab" id "a*b" $ \res ->
            res `shouldBe`
                [[],["b"],["ab"],["aab"]]
+       testCase (Just 3) "ab" id "(~a)b" $ \res ->
+           res `shouldBe`
+               [[],["b"],["bb"]]
        testCase (Just 4) "ab" Not "a*b" $ \res ->
            res `shouldBe`
                [[""],["a"],["aa","ba","bb"],["aaa","aba","abb","baa","bab","bba","bbb"]]
@@ -46,3 +50,5 @@ spec =
                      ,["aaa", "aab" ,"aba","abb","baa","bab","bba","bbb"]])
        testCase (Just 4) "ab" id "~(a*)&a*"
          (`shouldBe` [[], [], [], []])
+       testCase (Just 4) "ab" id "(~((a)*)|(a)*)"
+         (`shouldBe` [[""],["a","b"],["aa","ab","ba","bb"],["aaa","aab","aba","abb","baa","bab","bba","bbb"]])

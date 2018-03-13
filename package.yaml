@@ -19,6 +19,8 @@ dependencies:
   - QuickCheck >= 2.9.2
   - deepseq
   - text
+  - dlist
+  - unordered-containers
 
 library:
   source-dirs: src

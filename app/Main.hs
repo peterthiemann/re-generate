@@ -3,6 +3,8 @@ module Main where
 import Data.Semigroup ((<>))
 import Options.Applicative
 
+import Data.List (sort)
+
 import Control.Monad
 import Control.Monad.IO.Class
 import qualified Data.Text as T
@@ -79,7 +81,7 @@ greet (Regen c b sigma mm q t r) = do
                  GeneratorConfig
                  { gc_backend = b
                  , gc_maxLength = mm
-                 , gc_complementAlphabet = sigma
+                 , gc_complementAlphabet = sort sigma
                  }
              output = runGenerator cfg gre'
              process :: [T.Text] -> T.Text

@@ -2,6 +2,8 @@ module Main where
 
 import Criterion.Main
 
+import Data.List (sort)
+
 import GRegexp
 import Generator
 import RegexParser
@@ -21,7 +23,7 @@ matchGroup maxLength maxWords complementAlphabet f input =
              GeneratorConfig
              { gc_backend = gen
              , gc_maxLength = maxLength
-             , gc_complementAlphabet = complementAlphabet
+             , gc_complementAlphabet = sort complementAlphabet
              }
          benchmark =
              case maxWords of

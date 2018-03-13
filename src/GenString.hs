@@ -40,15 +40,6 @@ concatenate xss yss = collect 0
     combine n i =
         concatMap (\xs -> map (\ys -> xs <> ys) (ysegs !! (n - i))) (xsegs !! i)
 
--- | for testing
-xss = ["", "a", "cd"]
-yss = ["", "b", "aa"]
-
-xsegs = segmentize xss
-ysegs = segmentize yss
-combine n i = concatMap (\xs -> map (\ys -> xs <> ys) (ysegs !! (n - i))) (xsegs !! i)
-
-
 -- | collect elements of the same length; always returns an infinite list
 -- each same-length segment is sorted lexicographically
 segmentize :: Lang -> [[T.Text]]
@@ -179,11 +170,6 @@ restrictedPartitions ns n
   | n == 0 = [[]]
   | otherwise = let ns' = filter (<=n) ns in concatMap (\i -> map (i:) (restrictedPartitions ns' (n - i))) ns'
 
-
-collect n = concatMap wordsFromPartition (partitions n)
-
-wordsFromPartition [] = [mempty]
-wordsFromPartition (i:is) = concatMap (\w -> map (<>w) (xsegs !! i)) (wordsFromPartition is)
 
 -- | combination of takeWhile and dropWhile
 splitWhile :: (a -> Bool) -> [a] -> ([a], [a])

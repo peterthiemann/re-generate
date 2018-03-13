@@ -13,7 +13,7 @@ import qualified Data.List (intersect)
 import qualified Data.Text as T
 
 -- | inefficient definition due to use of snoc
-sigma_star :: Sigma -> Lang
+sigma_star :: Alphabet -> Lang
 sigma_star sigma =
     loop
     where
@@ -22,7 +22,7 @@ sigma_star sigma =
       f ts = map (snoc ts) sigma
 
 -- | create sigma* in a segmentized way avoids the inefficiency of snoc
-sigma_star' :: Sigma -> Lang
+sigma_star' :: Alphabet -> Lang
 sigma_star' sigma =
     concat segments
     where
@@ -63,7 +63,7 @@ segmentize = collect 0
 star xss = merge [mempty] (concatenate xss (star xss))
 
 -- | generate elements of the language of the gre as an ll-ascending stream
-generate :: Sigma -> GRE Char -> Lang
+generate :: Alphabet -> GRE Char -> Lang
 generate sigma r = gen r
   where
     gen Zero = []
@@ -193,7 +193,7 @@ splitWhile p xs@(x:xs')
   | otherwise = ([], xs)
 
 -- | generate elements of the language of the gre as an ll-ascending stream; the final thing
-generate' :: Sigma -> GRE Char -> Lang
+generate' :: Alphabet -> GRE Char -> Lang
 generate' sigma r = gen r
   where
     gen Zero = []

@@ -1,7 +1,7 @@
 module GenRefined.Shared where
 
 import GRegexp hiding (Lang)
-import Types (Sigma)
+import Types (Alphabet)
 import qualified OrderedLists as OL
 
 import Data.Monoid
@@ -80,13 +80,13 @@ differenceSegs Empty segs = Empty
 differenceSegs (Full (xl : xls)) (Cons yl ysegs) =
   Cons (difference xl yl) (differenceSegs (Full xls) ysegs)
 
-sigmaStarSegs :: Sigma -> Segments
+sigmaStarSegs :: Alphabet -> Segments
 sigmaStarSegs sigma = Full (map Univ segments)
   where
     segments = [mempty] : map extend segments
     extend segment = concatMap (\x -> map (T.singleton x<>) segment) sigma
 
-complementSegs :: Sigma -> Segments -> Segments
+complementSegs :: Alphabet -> Segments -> Segments
 complementSegs sigma = differenceSegs (sigmaStarSegs sigma)
 
 flattenSegs :: Segments -> [T.Text]

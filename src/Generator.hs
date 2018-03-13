@@ -7,7 +7,7 @@ where
 
 import GRegexp
 import RegexParser
-import Types (Sigma)
+import Types (Alphabet)
 import qualified GenNaive as GN
 import qualified GenNaiveStar as GNS
 import qualified GenRefined as GR
@@ -24,7 +24,7 @@ data GeneratorConfig
     = GeneratorConfig
     { gc_backend :: !Backend
     , gc_maxLength :: !(Maybe Int)
-    , gc_complementAlphabet :: !Sigma
+    , gc_complementAlphabet :: !Alphabet
     } deriving (Show, Eq)
 
 data Backend
@@ -44,7 +44,7 @@ runGenerator gc re =
          Just l -> take l r
          Nothing -> r
 
-generate :: Backend -> Sigma -> GRE Char -> [[T.Text]]
+generate :: Backend -> Alphabet -> GRE Char -> [[T.Text]]
 generate Seg = GS1.generate'
 generate SegStar = GS2.generate'
 generate Ref = GR.generate'

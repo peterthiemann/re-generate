@@ -12,7 +12,7 @@ import qualified Data.List (intersect)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 
-sigmaStarSegs :: Sigma -> Segments
+sigmaStarSegs :: Alphabet -> Segments
 sigmaStarSegs sigma =
     segments
     where
@@ -51,11 +51,11 @@ wordsFromPartition :: Map.Map Int (Lang) -> [Int] -> Lang
 wordsFromPartition msegs [] = [mempty]
 wordsFromPartition msegs (i:is) = concatMap (\w -> map (w<>) (msegs Map.! i)) (wordsFromPartition msegs is)
 
-complementSegs :: Sigma -> Segments -> Segments
+complementSegs :: Alphabet -> Segments -> Segments
 complementSegs sigma = differenceSegs (sigmaStarSegs sigma)
 
 -- | generate elements of the language of the gre as a stream of segments
-generate' :: Sigma -> GRE Char -> Segments
+generate' :: Alphabet -> GRE Char -> Segments
 generate' sigma r = gen r
   where
     gen Zero = repeat []
@@ -67,5 +67,5 @@ generate' sigma r = gen r
     gen (Not r) = complementSegs sigma (gen r)
     gen (Star r) = star (gen r)
 
-generate :: Sigma -> GRE Char -> Lang
+generate :: Alphabet -> GRE Char -> Lang
 generate sigma = concat . generate' sigma

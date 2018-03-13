@@ -63,7 +63,7 @@ makeForLength antiSet len re =
                         concatMap (flip replicateToSize len) starIn
                 in starOut
 
-generate' :: Sigma -> GRE Char -> Segments
+generate' :: Alphabet -> GRE Char -> Segments
 generate' sigmaIn re =
     let sigma = sort sigmaIn
         sigmaSize = length sigma
@@ -75,5 +75,5 @@ generate' sigmaIn re =
         takeUntil n = takeUntil (n - 1) + sigmaSize ^ n
     in map (\i -> F.toList $ makeForLength (take (takeUntil i) $ DL.toList antiSetStream) i re) [0..]
 
-generate :: Sigma -> GRE Char -> Lang
+generate :: Alphabet -> GRE Char -> Lang
 generate sigma = concat . generate' sigma

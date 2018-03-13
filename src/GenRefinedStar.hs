@@ -2,7 +2,7 @@ module GenRefinedStar where
 
 import GRegexp hiding (Lang)
 import GenRefined.Shared
-import Types (Sigma)
+import Types (Alphabet)
 import qualified OrderedLists as OL
 
 import Data.Monoid
@@ -28,7 +28,7 @@ star (Cons _ xsegs) = rsegs
              (collect xsegs' rsegs' xmap' rmap' xneidxs' rneidxs' (n+1))
 
 -- | generate elements of the language of the gre as a stream of segments
-generateSegs :: Sigma -> GRE Char -> Segments
+generateSegs :: Alphabet -> GRE Char -> Segments
 generateSegs sigma r = gen r
   where
     gen Zero = Empty
@@ -40,8 +40,8 @@ generateSegs sigma r = gen r
     gen (Not r) = complementSegs sigma (gen r)
     gen (Star r) = star (gen r)
 
-generate :: Sigma -> GRE Char -> [T.Text]
+generate :: Alphabet -> GRE Char -> [T.Text]
 generate sigma = flattenSegs . generateSegs sigma
 
-generate' :: Sigma -> GRE Char -> [[T.Text]]
+generate' :: Alphabet -> GRE Char -> [[T.Text]]
 generate' sigma = flattenSegs' . generateSegs sigma

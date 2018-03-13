@@ -1,10 +1,10 @@
 {-# LANGUAGE DeriveGeneric #-}
-module GRegexp where
+module GRegexp (GRE(..)) where
 
 import Types
 
 import Control.DeepSeq
-import Data.List
+import qualified Data.List as L
 import GHC.Generics
 import qualified Data.Text as T
 
@@ -27,8 +27,9 @@ atoms :: (Ord t) => GRE t -> [t]
 atoms Zero = []
 atoms One = []
 atoms (Atom t) = [t]
-atoms (Dot r s) = union (atoms r) (atoms s)
-atoms (Or r s) = union (atoms r) (atoms s)
-atoms (And r s) = union (atoms r) (atoms s)
+atoms (Dot r s) = L.union (atoms r) (atoms s)
+atoms (Or r s) = L.union (atoms r) (atoms s)
+atoms (And r s) = L.union (atoms r) (atoms s)
 atoms (Not r) = atoms r
 atoms (Star r) = atoms r
+

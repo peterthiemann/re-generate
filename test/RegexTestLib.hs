@@ -7,6 +7,7 @@ module RegexTestLib
 
 import qualified Data.List as List
 import qualified Data.Set as Set
+import qualified Data.Text as T
 import Control.Applicative (liftA2)
 import Test.QuickCheck
 import GRegexp as G (GRE(..))
@@ -59,7 +60,7 @@ data Feature a
   -- | Simplifycation of regular expressions.
   | Union (a -> a -> a)
   -- | And on regular expression
-  | Match (a -> String -> Bool)
+  | Match (a -> T.Text -> Bool)
   -- | Matching function
 
 
@@ -120,13 +121,13 @@ genRe b@(Basics atom seq alt star empty null) f = do
 -- | helper-function for inhabitants, returning the set of possible inhabitants
 -- based on this regex. (The Regex should match those.)
 --
-reToList :: GRE Char -> [String]
+reToList :: GRE Char -> [T.Text]
 reToList = GenSegments.generate alphabet
 
 
 -- | Generator for the inhabitants of this Regex
 --
-inhabitants :: GRE Char -> Gen String
+inhabitants :: GRE Char -> Gen T.Text
 inhabitants re =
   let ss = reToList re in
   if List.null ss
@@ -172,14 +173,15 @@ prop_simplify b f =
         return (re, re2)
       test (re, re2) =
           forAll (resize 60 $ listOf $ elements alphabet) $
-                     (\s -> match re s == match re2 s)
+                     (\s -> match re s == match re2 s) . T.pack
 
 prop_any b f =
-    counterexample "The following character should be matched by `any`" $ all (match any) allAny
+    counterexample "The following character should be matched by `any`" $
+    all (match any) allAny
   where
   (Match match) = getFeature (\case { Match _ -> True; _ -> False}) f
   (Any   any)   = getFeature (\case { Any _ -> True; _ -> False}) f
-  allAny = map return $ enumFromTo ' ' '~'
+  allAny = map T.singleton $ enumFromTo ' ' '~'
 
 
 

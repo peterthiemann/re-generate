@@ -6,6 +6,10 @@ import GRegexp
 -- | interface for implementing generators
 class GREImpl lang where
   type Sym lang
+  type Wrd lang
+
+  toList :: lang -> [Wrd lang]
+
   zero :: lang
   one  :: lang
   atom :: Sym lang -> lang

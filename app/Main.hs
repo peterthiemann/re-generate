@@ -68,11 +68,11 @@ regen = Regen
          <> help "stuttering counter for timing"
          <> showDefault))
       <*> option auto
-          ( long "budget"
-         <> short 'b'
-         <> metavar "BUDGET"
+          ( long "limit"
+         <> short 'l'
+         <> metavar "LIMIT"
          <> value 5.0
-         <> help "time budget for stutter timing (sec)"
+         <> help "time limit for stutter timing (sec)"
          <> showDefault)
       <*> argument str (metavar "REGEXP")
 

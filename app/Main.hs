@@ -39,7 +39,7 @@ regen = Regen
           ( long "backend"
           <> short 'b'
           <> metavar "BACKEND"
-          <> value Seg
+          <> value SegStar
           <> help ("BACKEND algorithm used for generator: " ++ show [(minBound::Backend) .. maxBound]))
       <*> strOption
           ( long "alphabet"
@@ -87,7 +87,7 @@ main = greet =<< execParser opts
 
 greet :: Regen -> IO ()
 greet (Regen c b sigma mm q t ms budget r) = do
-  unless q $ putStrLn $ "Called with complement = " ++ show c ++ ", maxlength = " ++ show mm ++ ", timing = " ++ show t ++ ", STUTTER = " ++ show ms ++ ", REGEXP = " ++ r
+  unless q $ putStrLn $ "# Called with complement = " ++ show c ++ ", maxlength = " ++ show mm ++ ", timing = " ++ show t ++ ", STUTTER = " ++ show ms ++ ", REGEXP = " ++ r
   case parseRe r of
     Nothing ->
       putStrLn "Cannot parse regular expression"
@@ -106,24 +106,26 @@ greet (Regen c b sigma mm q t ms budget r) = do
                  | otherwise = T.unlines
          case ms of
            Just st
-             | st > 0 -> do
-                 times <- stutter budget st output
-                 mapM_ (putStrLn . show) times
+             | st > 0 -> stutter budget st output
              | otherwise ->
                  putStrLn "Error: STUTTER size must be greater than zero"
            _ -> do
              (time, _) <- T.timeItT (liftIO $ T.putStrLn (process output))
              when t $ putStrLn $ show time ++ " seconds"
 
+showCsvTime i d = show i ++ "\t" ++ show d
+                  
 -- | perform timed, stuttering evaluation
-stutter :: Double -> Int -> [T.Text] -> IO [Double]
-stutter budget n xs
-  | budget <= 0.0 || null xs =
-    return []
-stutter budget n xs = do
-  (time, xs') <- T.timeItT (liftIO $ chunk n xs)
-  times <- stutter (budget - time) n xs'
-  return (time:times)
+stutter :: Double -> Int -> [T.Text] -> IO ()
+stutter budget step xs = loop 0 0 xs
+    where loop t n xs =
+            if (t >= budget || null xs) then return ()
+            else do
+                (time, xs') <- T.timeItT (liftIO $ chunk step xs)
+                let t' = t + time
+                times <- loop t' (n+step) xs'
+                putStrLn $ showCsvTime n t' 
+                return ()
 
 -- | force evaluation of a single chunk of size n
 chunk n [] =

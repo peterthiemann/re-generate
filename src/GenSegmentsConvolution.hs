@@ -35,7 +35,26 @@ concatenate lx ly =
                      []
             _ ->
               (multimerge $ zipWith (liftA2 T.append) lx ryss')
-              : collect xss' yss' mmx' mmy' ryss' (n+1)
+              : 
+              case mmy' of
+                Nothing ->
+                  collect xss' yss' mmx' mmy' ryss' (n+1)
+                Just _ ->
+                  collect' xss' yss' mmx' mmy' (reverse (take (n+1) lx)) (n+1)
+
+      collect' xss yss mmx mmy rxss n =
+        let (xs, xss', mmx') = updateMax xss mmx n
+            (ys, yss', mmy') = updateMax yss mmy n
+            mbound = liftA2 (+) mmx mmy
+            rxss' = xs : rxss
+        in
+          case mbound of
+            Just m | n >= m - 1 ->
+                     []
+            _ ->
+              (multimerge $ zipWith (liftA2 T.append) rxss' ly)
+              : collect' xss' yss' mmx' mmy' rxss' (n+1)
+
       updateMax _ mm@(Just _) n = ([], [], mm)
       updateMax [] Nothing n = ([], [], Just n)
       updateMax (xs:xss) Nothing n = (xs, xss, Nothing)

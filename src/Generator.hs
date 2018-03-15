@@ -14,6 +14,7 @@ import qualified GenRefined as GR
 import qualified GenRefinedStar as GRS
 import qualified GenSegments as GS1
 import qualified GenSegmentsStar2 as GS2
+import qualified GenSegmentsConvolution as GSC
 import qualified GenSet as GS
 import qualified GenString as G
 
@@ -32,6 +33,7 @@ data Backend
     | NaiveStar
     | Seg
     | SegStar
+    | SegConv
     | Ref
     | RefStar
     | NaiveSet
@@ -47,6 +49,7 @@ runGenerator gc re =
 generate :: Backend -> Alphabet -> GRE Char -> [[T.Text]]
 generate Seg = GS1.generate'
 generate SegStar = GS2.generate'
+generate SegConv = GSC.generate'
 generate Ref = GR.generate'
 generate RefStar = GRS.generate'
 generate Naive = GN.generate'

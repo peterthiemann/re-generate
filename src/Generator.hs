@@ -33,7 +33,7 @@ data Backend
     | NaiveStar
     | Seg
     | SegStar
-    | SegConv
+    | SegConvStar
     | Ref
     | RefStar
     | NaiveSet
@@ -49,7 +49,7 @@ runGenerator gc re =
 generate :: Backend -> Alphabet -> GRE Char -> [[T.Text]]
 generate Seg = GS1.generate'
 generate SegStar = GS2.generate'
-generate SegConv = GSC.generate'
+generate SegConvStar = GSC.generate'
 generate Ref = GR.generate'
 generate RefStar = GRS.generate'
 generate Naive = GN.generate'

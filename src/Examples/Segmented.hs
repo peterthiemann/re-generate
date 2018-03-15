@@ -36,7 +36,7 @@ instance GREImpl SegLang where
             mbound = liftA2 (+) mmx mmy
         in
           case mbound of
-            Just m | n > m ->
+            Just m | n >= m - 1 ->
                      []
             _ ->
               (foldr ILO.union [] $ map (combine n) [0 .. n]) :
@@ -79,3 +79,12 @@ concatenate' lx ly = collect 0
 [] !!! n = []
 (xs:xss) !!! 0 = xs
 (xs:xss) !!! n = xss !!! (n - 1)
+
+concatenate'' :: SegLang -> SegLang -> SegLang
+concatenate'' lx ly = collect ly []
+  where
+    collect (ysegn:ysegs) rly =
+      let rly' = ysegn : rly in
+      (foldr ILO.union [] $ zipWith (liftA2 T.append) lx rly') :
+      collect ysegs rly'
+

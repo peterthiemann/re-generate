@@ -12,6 +12,7 @@ import qualified GenNaive as GN
 import qualified GenNaiveStar as GNS
 import qualified GenRefined as GR
 import qualified GenRefinedStar as GRS
+import qualified GenRefinedConvolution as GRC
 import qualified GenSegments as GS1
 import qualified GenSegmentsStar2 as GS2
 import qualified GenSegmentsConvolution as GSC
@@ -36,6 +37,7 @@ data Backend
     | SegConvStar
     | Ref
     | RefStar
+    | RefConvStar
     | NaiveSet
     deriving (Read, Show, Enum, Bounded, Eq)
 
@@ -52,6 +54,7 @@ generate SegStar = GS2.generate'
 generate SegConvStar = GSC.generate'
 generate Ref = GR.generate'
 generate RefStar = GRS.generate'
+generate RefConvStar = GRC.generate'
 generate Naive = GN.generate'
 generate NaiveStar = GNS.generate'
 generate NaiveSet = GS.generate'

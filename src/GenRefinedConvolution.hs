@@ -1,9 +1,8 @@
-module GenRefinedConvolution where
+module GenRefinedConvolution (generate, generate') where
 
 import GRegexp hiding (Lang)
 import GenRefined.Shared hiding (concatenate)
 import Types (Alphabet)
-import qualified OrderedLists as OL
 
 import Control.Applicative
 import Data.Monoid
@@ -17,14 +16,12 @@ updateMax (Cons xs xss) Nothing n = (xs, xss, Nothing)
 updateMax (Full (xs:xss)) Nothing n = (xs, Full xss, Nothing)
 
 concatenate :: Segments -> Segments -> Segments
-concatenate xsegs0 ysegs =
-  collect xsegs0 ysegs Nothing Nothing [] 0
+concatenate xsegs0 ysegs0 =
+  collect xsegs0 ysegs0 Nothing Nothing [] 0
   where
     collect xsegs ysegs mmx mmy ryss n =
-      let (xln, xsegs', mmx') =
-            updateMax xsegs mmx n
-          (yln, ysegs', mmy') =
-            updateMax ysegs mmy n
+      let (xln, xsegs', mmx') = updateMax xsegs mmx n
+          (yln, ysegs', mmy') = updateMax ysegs mmy n
           mbound = liftA2 (+) mmx mmy
           ryss' = yln : ryss
       in
@@ -34,7 +31,25 @@ concatenate xsegs0 ysegs =
           _ ->
             Cons 
             (foldr union Null $ concatWithSegments xsegs0 ryss')
-            (collect xsegs' ysegs' mmx' mmy' ryss' (n+1))
+            (case mmy' of
+                Nothing ->
+                  collect xsegs' ysegs' mmx' mmy' ryss' (n+1)
+                Just _ ->
+                  collect' xsegs' ysegs' mmx' mmy' (reverse (take (n+1) (segsToList xsegs0))) (n+1))
+
+    collect' xsegs ysegs mmx mmy rxss n =
+      let (xln, xsegs', mmx') = updateMax xsegs mmx n
+          (yln, ysegs', mmy') = updateMax ysegs mmy n
+          mbound = liftA2 (+) mmx mmy
+          rxss' = xln : rxss
+      in
+        case mbound of
+          Just m | n >= m - 1 ->
+                   Empty
+          _ ->
+            Cons 
+            (foldr union Null $ concatWithSegments' rxss' ysegs0)
+            (collect' xsegs' ysegs' mmx' mmy' rxss' (n+1))
 
 concatWithSegments :: Segments -> [Lang] -> [Lang]
 concatWithSegments Empty _ = []
@@ -44,22 +59,30 @@ concatWithSegments (Cons xl xsegs) (yl:yss) =
 concatWithSegments (Full (xl:xss)) (yl:yss) = 
   concatLang xl yl : zipWith concatLang xss yss
 
+concatWithSegments' :: [Lang] -> Segments -> [Lang]
+concatWithSegments' _ Empty = []
+concatWithSegments' [] _ = []
+concatWithSegments' (yl:yss) (Cons xl xsegs) = 
+  concatLang yl xl : concatWithSegments' yss xsegs
+concatWithSegments' (yl:yss) (Full (xl:xss)) = 
+  concatLang yl xl : zipWith concatLang yss xss
+
+segsToList :: Segments -> [Lang]
+segsToList Empty = []
+segsToList (Cons xl xsegs) = xl : segsToList xsegs
+segsToList (Full xss) = xss
+
 star :: Segments -> Segments
 star Empty = Cons (Univ [mempty]) Empty
 star (Full ls) = Full ls
-star (Cons _ xsegs) = rsegs
+star (Cons _ xsegs) = ysegs
   where
-    rsegs = Cons (Univ [mempty]) $ collect xsegs rsegs Map.empty Map.empty [] [] 1
-    collect xsegs rsegs xmap rmap xneidxs rneidxs n =
-      let (xsegs', xmap', xneidxs') =
-            updateMapIndexes n xsegs xmap xneidxs
-          (rsegs', rmap', rneidxs') =
-            updateMapIndexes (n-1) rsegs rmap rneidxs
-          usefulxidxs = filter (\i -> (n-i) `elem` rneidxs') xneidxs'
-          combine i = concatLang (xmap' Map.! i) (rmap' Map.! (n-i))
-      in
-        Cons (foldr union Null $ map combine usefulxidxs)
-             (collect xsegs' rsegs' xmap' rmap' xneidxs' rneidxs' (n+1))
+    ysegs = Cons (Univ [mempty]) $ collect ysegs []
+    collect (Cons ysegi ysegs) rsegs =
+      let rsegs' = ysegi : rsegs in
+        Cons
+        (foldr union Null $ concatWithSegments xsegs rsegs')
+        (collect ysegs rsegs')
 
 -- | generate elements of the language of the gre as a stream of segments
 generateSegs :: Alphabet -> GRE Char -> Segments

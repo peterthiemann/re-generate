@@ -1,4 +1,4 @@
-module GenSegmentsConvolution where
+module GenSegmentsConvolution (generate, generate') where
 
 import GRegexp
 import OrderedLists

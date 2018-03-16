@@ -2,15 +2,12 @@ module GenSegmentsConvolution where
 
 import GRegexp
 import OrderedLists
-import Partitions
 import Types
 
 import Control.Applicative
 import Data.List hiding (intersect)
 import Data.Maybe
 import Data.Monoid
-import qualified Data.List (intersect)
-import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 
 sigmaStarSegs :: Alphabet -> Segments

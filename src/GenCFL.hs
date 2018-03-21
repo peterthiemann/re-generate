@@ -7,6 +7,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
 import CFG
+import CFGExample
 
 type Segments = [Lang]
 type Lang = [T.Text]
@@ -74,9 +75,3 @@ concatLang lx ly =
     update (len, lang) = M.alter (updater lang) len
     updater lang Nothing = Just lang
     updater lang (Just lang') = Just (L.union lang lang')
-
-examplecfg =
-  CFG [0] "ab" [Production 0 [], Production 0 [Right 'a', Left 0, Right 'b']] 0
-
-anotherexample =
-  CFG [0] "()" [Production 0 [], Production 0 [Right '(', Left 0, Right ')', Left 0]] 0

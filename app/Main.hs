@@ -40,7 +40,7 @@ regen = Regen
           <> short 'b'
           <> metavar "BACKEND"
           <> value SegStar
-          <> help ("BACKEND algorithm used for generator: " ++ show [(minBound::Backend) .. maxBound]))
+          <> help ("BACKEND algorithm used for generator: " ++ unwords (map show [(minBound::Backend) .. maxBound])))
       <*> strOption
           ( long "alphabet"
             <> short 'a'

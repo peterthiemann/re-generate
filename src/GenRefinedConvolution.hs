@@ -9,47 +9,59 @@ import Data.Monoid
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 
-updateMax :: Segments -> Maybe Int -> Int -> (Lang, Segments, Maybe Int)
-updateMax _ mm@(Just _) n = (Null, Empty, mm)
-updateMax Empty Nothing n = (Null, Empty, Just n)
-updateMax (Cons xs xss) Nothing n = (xs, xss, Nothing)
-updateMax (Full (xs:xss)) Nothing n = (xs, Full xss, Nothing)
+updateMax :: Int -> Segments -> Maybe Int -> Maybe Int -> (Lang, Segments, Maybe Int, Maybe Int)
+updateMax n _ mm@(Just _) mf = (Null, Empty, mm, mf)
+updateMax n Empty Nothing mf = (Null, Empty, Just n, mf)
+updateMax n (Cons xs xss) Nothing Nothing = (xs, xss, Nothing, Nothing)
+updateMax n (Full (xs:xss)) Nothing Nothing = (xs, Full xss, Nothing, Just n)
+updateMax n (Full (xs:xss)) Nothing mf@(Just _) = (xs, Full xss, Nothing, mf)
 
-concatenate :: Segments -> Segments -> Segments
-concatenate xsegs0 ysegs0 =
-  collect xsegs0 ysegs0 Nothing Nothing [] 0
+sigmaStarFromNth :: Alphabet -> Int -> Segments
+sigmaStarFromNth sigma n = fromNthFull $ sigmaStarSegs sigma
   where
-    collect xsegs ysegs mmx mmy ryss n =
-      let (xln, xsegs', mmx') = updateMax xsegs mmx n
-          (yln, ysegs', mmy') = updateMax ysegs mmy n
+    fromNthFull (Full xss) = Full (drop n xss)
+
+concatenate :: Alphabet -> Segments -> Segments -> Segments
+concatenate sigma xsegs0 ysegs0 =
+  collect xsegs0 ysegs0 Nothing Nothing Nothing Nothing [] 0
+  where
+    collect xsegs ysegs mmx mmy mfx mfy ryss n =
+      let (xln, xsegs', mmx', mfx') = updateMax n xsegs mmx mfx
+          (yln, ysegs', mmy', mfy') = updateMax n ysegs mmy mfy
           mbound = liftA2 (+) mmx mmy
+          mfullbound = liftA2 (+) mfx mfy
           ryss' = yln : ryss
       in
-        case mbound of
-          Just m | n >= m - 1 ->
+        case (mbound, mfullbound) of
+          (Just m, _) | n >= m - 1 ->
                    Empty
+          (_, Just f) | n >= f ->
+                   sigmaStarFromNth sigma n
           _ ->
             Cons 
             (foldr union Null $ concatWithSegments xsegs0 ryss')
             (case mmy' of
                 Nothing ->
-                  collect xsegs' ysegs' mmx' mmy' ryss' (n+1)
+                  collect xsegs' ysegs' mmx' mmy' mfx' mfy' ryss' (n+1)
                 Just _ ->
-                  collect' xsegs' ysegs' mmx' mmy' (reverse (take (n+1) (segsToList xsegs0))) (n+1))
+                  collect' xsegs' ysegs' mmx' mmy' mfx' mfy' (reverse (take (n+1) (segsToList xsegs0))) (n+1))
 
-    collect' xsegs ysegs mmx mmy rxss n =
-      let (xln, xsegs', mmx') = updateMax xsegs mmx n
-          (yln, ysegs', mmy') = updateMax ysegs mmy n
+    collect' xsegs ysegs mmx mmy mfx mfy rxss n =
+      let (xln, xsegs', mmx', mfx') = updateMax n xsegs mmx mfx
+          (yln, ysegs', mmy', mfy') = updateMax n ysegs mmy mfy
           mbound = liftA2 (+) mmx mmy
+          mfullbound = liftA2 (+) mfx mfy
           rxss' = xln : rxss
       in
-        case mbound of
-          Just m | n >= m - 1 ->
+        case (mbound, mfullbound) of
+          (Just m, _) | n >= m - 1 ->
                    Empty
+          (_, Just f) | n >= f ->
+                   sigmaStarFromNth sigma n
           _ ->
             Cons 
             (foldr union Null $ concatWithSegments' rxss' ysegs0)
-            (collect' xsegs' ysegs' mmx' mmy' rxss' (n+1))
+            (collect' xsegs' ysegs' mmx' mmy' mfx' mfy' rxss' (n+1))
 
 concatWithSegments :: Segments -> [Lang] -> [Lang]
 concatWithSegments Empty _ = []
@@ -91,7 +103,7 @@ generateSegs sigma r = gen r
     gen Zero = Empty
     gen One  = Cons (Data [mempty]) Empty
     gen (Atom t) = Cons Null $ Cons (Data [T.singleton t]) Empty
-    gen (Dot r s) = concatenate (gen r) (gen s)
+    gen (Dot r s) = concatenate sigma (gen r) (gen s)
     gen (Or r s) = unionSegs (gen r) (gen s)
     gen (And r s) = intersectSegs (gen r) (gen s)
     gen (Not r) = complementSegs sigma (gen r)

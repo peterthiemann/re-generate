@@ -7,6 +7,7 @@ import Data.List (sort)
 import GRegexp
 import Generator
 import RegexParser
+import Types (Alphabet)
 
 regexEnv :: (GRE Char -> GRE Char) -> String -> GRE Char
 regexEnv f input =
@@ -36,17 +37,29 @@ matchGroup maxLength maxWords complementAlphabet f input =
            ++ show maxLength ++ " and complement alpha=" ++ complementAlphabet
            ++ " and maxWords=" ++ show maxWords
 
+lengthBounds :: [Int]
+lengthBounds = [8, 12, 16, 20]
+
+matchGroups :: Alphabet -> String -> [Benchmark]
+matchGroups sigma reString = do
+  maxLength <- lengthBounds
+  transform <- [id, Not]
+  return $ matchGroup (Just maxLength) Nothing sigma transform reString
+
 main :: IO ()
 main =
-    defaultMain
-    [ matchGroup (Just 4) Nothing "ab" id "a*b"
-    , matchGroup (Just 8) Nothing "ab" id "~(a*)|a*"
-    , matchGroup (Just 8) Nothing "ab" id "~(a*)&a*"
-    , matchGroup (Just 4) Nothing "ab" Not "a*b"
-    , matchGroup (Just 8) Nothing "ab" Not "a*b"
-    , matchGroup (Just 16) Nothing "ab" Not "a*b"
-    , matchGroup (Just 20) Nothing "ab" Not "a*b"
-    , matchGroup (Just 20) (Just 20) "ab" Not "a*b"
-    , matchGroup (Just 20) (Just 40) "ab" Not "a*b"
-    , matchGroup (Just 20) (Just 80) "ab" Not "a*b"
+    defaultMain $ concat
+    [ matchGroups "ab" "a*"
+    , matchGroups "ab" "a*b"
+    , matchGroups "ab" "ab*"
+    , matchGroups "ab" "ba*b"
+    , matchGroups "ab" "a*b*"
+    , matchGroups "ab" "~(a*)|a*"
+    , matchGroups "ab" "~(a*)&a*"
+    , matchGroups "ab" "(b*ab*a)*b*"
+    , matchGroups "ab" "((b*ab*a)*b*)&((a*ba*b)*a*)"
+    , matchGroups "ab" "((b*ab*a)*b*)&~((a*ba*b)*a*)"
+    , matchGroups "ab" "(b*ab*ab*a)*b*"
+    , matchGroups "ab" "((b*ab*ab*a)*b*)&((a*ba*ba*b)*a*)"
+    , matchGroups "ab" "((b*ab*ab*a)*b*)&~((a*ba*ba*b)*a*)"
     ]

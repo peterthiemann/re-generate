@@ -17,11 +17,11 @@ class GREImpl lang where
   concatenate :: lang -> lang -> lang
   star :: lang -> lang
   intersect :: lang -> lang -> lang
-  complement :: [Sym lang] -> lang -> lang
+  difference :: lang -> lang -> lang
 
 
 generate :: GREImpl lang => [Sym lang] -> GRE (Sym lang) -> lang
-generate sigma r = gen r where
+generate sigma = gen where
   gen Zero = zero
   gen One = one
   gen (Atom t) = atom t
@@ -29,4 +29,5 @@ generate sigma r = gen r where
   gen (Dot r s) = concatenate (gen r) (gen s)
   gen (Star r) = star (gen r)
   gen (And r s) = intersect (gen r) (gen s)
-  gen (Not r) = complement sigma (gen r)
+  gen (Not r) = difference sigmastar (gen r)
+  sigmastar = star (foldr union zero $ map atom sigma)

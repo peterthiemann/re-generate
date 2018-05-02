@@ -57,14 +57,11 @@ instance GREImpl SegLang where
       combine n i =
         [T.append x y | x <- lx !!! i, y <- lr !!! (n - i)]
 
-  complement sigma lx = difference lsigmastar lx
-    where
-      lsigmastar = [T.empty] : map extend lsigmastar
-      extend lsigmai = [T.cons a w | a <- sigma, w <- lsigmai]
+  difference = difference'
 
-difference [] ly = []
-difference lx [] = lx
-difference (sx:lx) (sy:ly) = ILO.difference sx sy : difference lx ly
+difference' [] ly = []
+difference' lx [] = lx
+difference' (sx:lx) (sy:ly) = ILO.difference sx sy : difference' lx ly
 
 concatenate' :: SegLang -> SegLang -> SegLang
 concatenate' lx ly = collect 0

@@ -1,6 +1,4 @@
-box:
-  id: alpine
-  cmd: /bin/sh
+box: agrafix/tbi:20171121215453
 
 build:
   steps:

@@ -1,6 +1,18 @@
 box: agrafix/tbi:20171121215453
 
 build:
-  steps:
-    - script:
-        code: echo "hello, world!"
+    steps:
+        - script:
+            name: setup compiler
+            code: |
+                stack --version
+                scripts/spinner.sh stack setup --no-terminal
+        - script:
+            name: dependencies (needed?)
+            code: |
+                scripts/spinner.sh stack build --test --bench --only-dependencies --no-terminal
+        - script:
+            name: build and test
+            code: |
+                scripts/spinner.sh stack build --test --bench --no-run-benchmarks --pedantic --no-terminal
+

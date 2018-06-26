@@ -8,6 +8,7 @@ where
 import GRegexp
 import RegexParser
 import Types (Alphabet)
+import qualified GenMcIlroy as GM
 import qualified GenNaive as GN
 import qualified GenNaiveStar as GNS
 import qualified GenRefined as GR
@@ -32,6 +33,7 @@ data GeneratorConfig
 data Backend
     = Naive
     | NaiveStar
+    | McIlroy
     | Seg
     | SegStar
     | SegConvStar
@@ -58,3 +60,4 @@ generate RefConvStar = GRC.generate'
 generate Naive = GN.generate'
 generate NaiveStar = GNS.generate'
 generate NaiveSet = GS.generate'
+generate McIlroy = GM.generate'

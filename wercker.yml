@@ -1,3 +1,7 @@
+box:
+  id: alpine
+  cmd: /bin/sh
+
 build:
   steps:
     - script:

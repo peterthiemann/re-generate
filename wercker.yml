@@ -1,0 +1,4 @@
+build:
+  steps:
+    - script:
+        code: echo "hello, world!"

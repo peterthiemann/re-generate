@@ -12,13 +12,11 @@ import qualified Data.Text as T
 testCase1 ::
     Maybe Int
     -> String
-    -> (GRE Char -> GRE Char)
     -> (GRE Char)
     -> ([[T.Text]] -> IO ())
     -> Spec
-testCase1 maxLen complementAlphabet f parsedRe test =
-    do let re = (f parsedRe) in
-        describe ("generates correct outputs for " ++ pretty re ++ " with maxLength=" ++ show maxLen ++ " and complementAlphabet=" ++ show complementAlphabet) $
+testCase1 maxLen complementAlphabet re test =
+    do describe ("generates correct outputs for " ++ pretty re ++ " with maxLength=" ++ show maxLen ++ " and complementAlphabet=" ++ show complementAlphabet) $
             flip mapM_ [minBound..maxBound] $ \gen ->
             do let config =
                     GeneratorConfig
@@ -31,10 +29,10 @@ testCase1 maxLen complementAlphabet f parsedRe test =
 
 spec :: Spec
 spec =
-    do testCase1 (Just 5) "ab" id (Star One) $ \res ->
+    do testCase1 (Just 5) "ab" (Star One) $ \res ->
            res `shouldBe`
                [[""]]
-       testCase1 (Just 5) "ab" id (Star (Or Zero One)) $ \res ->
+       testCase1 (Just 5) "ab" (Star (Or Zero One)) $ \res ->
            res `shouldBe`
                [[""]]
     --    testCase1 Nothing "ab" id (Star One) $ \res -> -- these do not terminate

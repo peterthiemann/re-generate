@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module IdkSpec (spec) where
+module FinitenessSpec (spec) where
 
 import GRegexp
 import Generator
